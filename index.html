@@ -303,21 +303,50 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
 .acc-detail-close:hover{background:var(--card)}
 .acc-detail-close svg{width:14px;height:14px;stroke:var(--text2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .acc-detail-body{padding:16px 20px 20px;flex:1;overflow-y:auto}
-.acc-detail-label{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;font-weight:500}
+.acc-detail-label{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;font-weight:500;display:flex;justify-content:space-between;align-items:center}
 .acc-detail-content{min-height:140px;padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:.82rem;line-height:1.6;color:var(--text);outline:none;transition:border-color .25s,background .25s;white-space:pre-wrap}
 .acc-detail-content:empty::before{content:attr(data-placeholder);color:var(--text3);font-style:italic}
 .acc-detail-content:focus{border-color:var(--accent);background:var(--accent-bg)}
-.small-btn{font-size:.7rem;padding:4px 10px;border-radius:6px;background:var(--card2);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s}
-.small-btn:hover{border-color:var(--accent);color:var(--accent)}
+.acc-detail-footer{padding:10px 20px 20px;display:flex;justify-content:flex-end;gap:10px}
+.acc-detail-footer .small-btn{padding:12px 24px;font-size:.85rem}
+.small-btn{font-size:.7rem;padding:6px 12px;border-radius:6px;background:var(--card2);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.small-btn:hover,.small-btn:active{border-color:var(--accent);color:var(--accent)}
 .small-btn.accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
-.small-btn.accent:hover{background:var(--accent2)}
-.inline-input{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.78rem;color:var(--text);width:100%;transition:border-color .2s}
+.small-btn.accent:hover,.small-btn.accent:active{background:var(--accent2)}
+.small-btn.danger{background:transparent;color:var(--danger);border-color:var(--danger)}
+.small-btn.danger:hover,.small-btn.danger:active{background:rgba(224,85,85,.12)}
+.inline-input{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:.82rem;color:var(--text);width:100%;transition:border-color .2s}
 .inline-input:focus{border-color:var(--accent);outline:none}
+.inline-input-row{display:flex;gap:6px;align-items:center;margin-top:8px}
+.inline-input-row .inline-input{flex:1}
+.inline-input-row .small-btn{flex-shrink:0;padding:8px 14px}
 .fav-btn{color:var(--text3);transition:color .2s}.fav-btn.active{color:var(--accent)}
+
+/* GENERIC MODAL (replaces prompt/confirm) */
+.muse-modal-overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;padding:20px}
+.muse-modal-overlay.open{opacity:1;visibility:visible}
+.muse-modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:360px;padding:24px;transform:scale(.92);opacity:0;transition:transform .25s var(--transition),opacity .25s}
+.muse-modal-overlay.open .muse-modal{transform:scale(1);opacity:1}
+.muse-modal h3{font-size:.9rem;font-family:var(--font-title);margin-bottom:14px}
+.muse-modal .muse-modal-input{width:100%;margin-bottom:16px}
+.muse-modal .muse-modal-msg{font-size:.82rem;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.muse-modal-btns{display:flex;gap:8px;justify-content:flex-end}
+.muse-modal-btns .small-btn{padding:10px 18px;font-size:.78rem}
+
+/* MOBILE TOUCH TARGETS */
+.w-kanban-card{position:relative}
+.w-kanban-card .kcard-del{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(224,85,85,.15);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--danger);opacity:0;transition:opacity .2s;cursor:pointer}
+.w-kanban-card:hover .kcard-del,.w-kanban-card:active .kcard-del{opacity:1}
+@media(max-width:600px){.w-kanban-card .kcard-del{opacity:.5}}
+.w-gallery-item{position:relative}
+.w-gallery-item .gal-del{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#fff;opacity:0;transition:opacity .2s;cursor:pointer}
+.w-gallery-item:hover .gal-del,.w-gallery-item:active .gal-del{opacity:1}
+@media(max-width:600px){.w-gallery-item .gal-del{opacity:.6}}
 
 /* EVENT INPUT */
 .event-input-row{display:flex;gap:6px;margin-top:8px}
 .event-input-row input{flex:1}
+.event-input-row .small-btn{flex-shrink:0;padding:8px 14px}
 
 /* RESPONSIVE */
 @media(min-width:600px){
@@ -368,8 +397,28 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
       <button class="acc-detail-close" onclick="closeAccDetail()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="acc-detail-body">
-      <div class="acc-detail-label">CONTEÚDO</div>
+      <div class="acc-detail-label">
+        <span>CONTEÚDO</span>
+        <button class="small-btn" onclick="renameAccItemFromModal()" style="font-size:0.6rem;padding:2px 6px">Renomear item</button>
+      </div>
       <div class="acc-detail-content" id="accDetailContent" contenteditable="true" data-placeholder="Clique para adicionar conteúdo a esta subpágina..."></div>
+    </div>
+    <div class="acc-detail-footer">
+      <button class="small-btn" onclick="closeAccDetail()">Cancelar</button>
+      <button class="small-btn accent" onclick="saveAndCloseAccDetail()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- GENERIC MODAL (replaces prompt/confirm) -->
+<div class="muse-modal-overlay" id="museModalOverlay">
+  <div class="muse-modal">
+    <h3 id="museModalTitle"></h3>
+    <div class="muse-modal-msg" id="museModalMsg" style="display:none"></div>
+    <input class="inline-input muse-modal-input" id="museModalInput" style="display:none" placeholder="">
+    <div class="muse-modal-btns">
+      <button class="small-btn" id="museModalCancel" onclick="museModalResolve(null)">Cancelar</button>
+      <button class="small-btn accent" id="museModalOk">OK</button>
     </div>
   </div>
 </div>
@@ -390,6 +439,51 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
 <nav class="bottom-nav" id="bottomNav"></nav>
 
 <script>
+
+// ========== CUSTOM MODAL SYSTEM (mobile-first) ==========
+let museModalResolveFn = null;
+function museModalResolve(val) {
+  const overlay = document.getElementById('museModalOverlay');
+  overlay.classList.remove('open');
+  if(museModalResolveFn) { museModalResolveFn(val); museModalResolveFn = null; }
+}
+function musePrompt(title, placeholder) {
+  return new Promise(resolve => {
+    museModalResolveFn = resolve;
+    const overlay = document.getElementById('museModalOverlay');
+    document.getElementById('museModalTitle').textContent = title;
+    const msg = document.getElementById('museModalMsg');
+    msg.style.display = 'none';
+    const inp = document.getElementById('museModalInput');
+    inp.style.display = 'block';
+    inp.value = '';
+    inp.placeholder = placeholder || '';
+    const okBtn = document.getElementById('museModalOk');
+    okBtn.textContent = 'OK';
+    okBtn.className = 'small-btn accent';
+    okBtn.onclick = () => museModalResolve(inp.value.trim());
+    document.getElementById('museModalCancel').textContent = 'Cancelar';
+    overlay.classList.add('open');
+    setTimeout(() => inp.focus(), 200);
+  });
+}
+function museConfirm(title, message) {
+  return new Promise(resolve => {
+    museModalResolveFn = resolve;
+    const overlay = document.getElementById('museModalOverlay');
+    document.getElementById('museModalTitle').textContent = title;
+    const msg = document.getElementById('museModalMsg');
+    msg.style.display = 'block';
+    msg.textContent = message;
+    document.getElementById('museModalInput').style.display = 'none';
+    const okBtn = document.getElementById('museModalOk');
+    okBtn.textContent = 'Confirmar';
+    okBtn.className = 'small-btn danger';
+    okBtn.onclick = () => museModalResolve(true);
+    document.getElementById('museModalCancel').textContent = 'Cancelar';
+    overlay.classList.add('open');
+  });
+}
 
 // ========== STATE ==========
 const DEFAULT_STATE = {
@@ -710,30 +804,34 @@ function removeEvent(dk, idx) {
 
 // ========== SUBPAGES CRUD ==========
 function addSubpage() {
-  const name = prompt('Nome da nova subpágina:');
-  if(!name || !name.trim()) return;
-  state.subpages.push({
-    id: genId(), name: name.trim(), icon:'◇', desc:'Nova subpágina personalizada',
-    longDesc:'Adicione uma descrição para esta subpágina.', gradient:'custom', coverImage:'', widgets:[], favorite:false, deleted:false
+  musePrompt('Nova subpágina', 'Nome da subpágina:').then(name => {
+    if(!name || !name.trim()) return;
+    state.subpages.push({
+      id: genId(), name: name.trim(), icon:'◇', desc:'Nova subpágina personalizada',
+      longDesc:'Adicione uma descrição para esta subpágina.', gradient:'custom', coverImage:'', widgets:[], favorite:false, deleted:false
+    });
+    saveState(); render();
   });
-  saveState(); render();
 }
 function deleteSubpage(id) {
   const sp = state.subpages.find(s => s.id === id);
-  if(sp && confirm(`Mover "${sp.name}" para a lixeira?`)) {
+  if(!sp) return;
+  museConfirm('Mover para lixeira', `Mover "${sp.name}" para a lixeira?`).then(ok => {
+    if(!ok) return;
     sp.deleted = true; saveState();
     navigate('home');
-  }
+  });
 }
 function restoreSubpage(id) {
   const sp = state.subpages.find(s => s.id === id);
   if(sp) { sp.deleted = false; saveState(); renderSidebar(); render(); }
 }
 function permanentDelete(id) {
-  if(confirm('Excluir permanentemente?')) {
+  museConfirm('Excluir permanentemente', 'Esta ação não pode ser desfeita. Excluir?').then(ok => {
+    if(!ok) return;
     state.subpages = state.subpages.filter(s => s.id !== id);
     saveState(); renderSidebar(); render();
-  }
+  });
 }
 function toggleFavorite(id) {
   const sp = state.subpages.find(s => s.id === id);
@@ -838,7 +936,15 @@ function addWidget(spId, type) {
 
 function removeWidget(spId, wIdx) {
   const sp = state.subpages.find(s => s.id === spId);
-  if(sp) { sp.widgets.splice(wIdx, 1); saveState(); render(); }
+  if(!sp) return;
+  const w = sp.widgets[wIdx];
+  museConfirm('Remover widget', `Excluir o widget "${w.title}"?`).then(ok => {
+    if(ok) {
+      sp.widgets.splice(wIdx, 1);
+      saveState();
+      render();
+    }
+  });
 }
 
 function renderWidget(w, idx, spId) {
@@ -854,13 +960,13 @@ function renderWidget(w, idx, spId) {
       body = `<div class="w-kanban">${w.data.columns.map((col,ci)=>`
         <div class="w-kanban-col">
           <h4>${col.name}</h4>
-          ${col.cards.map((card,cri)=>`<div class="w-kanban-card" ondblclick="removeKanbanCard('${spId}',${idx},${ci},${cri})" title="Dbl-click para remover">${card}</div>`).join('')}
+          ${col.cards.map((card,cri)=>`<div class="w-kanban-card">${card}<span class="kcard-del" onclick="removeKanbanCard('${spId}',${idx},${ci},${cri})" title="Remover">✕</span></div>`).join('')}
           <button class="small-btn" style="width:100%;margin-top:4px" onclick="addKanbanCard('${spId}',${idx},${ci})">+</button>
         </div>`).join('')}</div>`;
       break;
     case 'galeria':
       body = `<div class="w-gallery">${w.data.items.map((it,ii)=>`
-        <div class="w-gallery-item" style="background:${it.color}" ondblclick="removeGalleryItem('${spId}',${idx},${ii})">${it.title}</div>`).join('')}
+        <div class="w-gallery-item" style="background:${it.color}">${it.title}<span class="gal-del" onclick="removeGalleryItem('${spId}',${idx},${ii})" title="Remover">✕</span></div>`).join('')}
         <div class="w-gallery-item" style="background:var(--card2);border:1px dashed var(--border);color:var(--text3)" onclick="addGalleryItem('${spId}',${idx})">+</div>
       </div>`;
       break;
@@ -871,7 +977,7 @@ function renderWidget(w, idx, spId) {
           <span>${it.text}</span>
           <button class="widget-delete" onclick="removeListItem('${spId}',${idx},${ii})">✕</button>
         </div>`).join('')}
-        <div style="margin-top:8px"><input class="inline-input" placeholder="Novo item..." id="li_${w.id}" onkeydown="if(event.key==='Enter')addListItem('${spId}',${idx},'${w.id}')"></div>
+        <div class="inline-input-row"><input class="inline-input" placeholder="Novo item..." id="li_${w.id}"><button class="small-btn accent" onclick="addListItem('${spId}',${idx},'${w.id}')">OK</button></div>
       </div>`;
       break;
     case 'grafico':
@@ -953,17 +1059,17 @@ function renderWidget(w, idx, spId) {
 function updateTableCell(spId,wIdx,rIdx,cIdx,val){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.rows[rIdx][cIdx]=val;saveState();}
 function addTableRow(spId,wIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx]){sp.widgets[wIdx].data.rows.push(sp.widgets[wIdx].data.columns.map(()=>'—'));saveState();render();}}
 function removeTableRow(spId,wIdx,rIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx]){sp.widgets[wIdx].data.rows.splice(rIdx,1);saveState();render();}}
-function addKanbanCard(spId,wIdx,colIdx){const t=prompt('Texto do card:');if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.columns[colIdx].cards.push(t);saveState();render();}
+function addKanbanCard(spId,wIdx,colIdx){musePrompt('Novo card','Texto do card:').then(t=>{if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.columns[colIdx].cards.push(t);saveState();render();});}
 function removeKanbanCard(spId,wIdx,colIdx,cardIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.columns[colIdx].cards.splice(cardIdx,1);saveState();render();}
-function addGalleryItem(spId,wIdx){const t=prompt('Título:');if(!t)return;const colors=['#2a2535','#1e2530','#252a1e','#2a251e','#1e252a'];const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.push({title:t,color:colors[Math.floor(Math.random()*colors.length)]});saveState();render();}
+function addGalleryItem(spId,wIdx){musePrompt('Novo item','Título do item:').then(t=>{if(!t)return;const colors=['#2a2535','#1e2530','#252a1e','#2a251e','#1e252a'];const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.push({title:t,color:colors[Math.floor(Math.random()*colors.length)]});saveState();render();});}
 function removeGalleryItem(spId,wIdx,iIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.splice(iIdx,1);saveState();render();}
 function toggleListItem(spId,wIdx,iIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items[iIdx].done=!sp.widgets[wIdx].data.items[iIdx].done;saveState();render();}
 function removeListItem(spId,wIdx,iIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.splice(iIdx,1);saveState();render();}
 function addListItem(spId,wIdx,wId){const inp=document.getElementById('li_'+wId);if(!inp||!inp.value.trim())return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.push({text:inp.value.trim(),done:false});saveState();render();}
 function updatePanelMetric(spId,wIdx,mIdx,key,val){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.metrics[mIdx][key]=val;saveState();}
-function addTimelineEntry(spId,wIdx){const t=prompt('Texto:');if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.entries.push({date:new Date().toLocaleDateString('pt-BR'),text:t});saveState();render();}
-function addFeedPost(spId,wIdx){const t=prompt('Post:');if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.posts.unshift({text:t,time:new Date().toLocaleString('pt-BR')});saveState();render();}
-function updateMapLabel(spId,wIdx){const l=prompt('Local:');if(!l)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.label=l;saveState();render();}
+function addTimelineEntry(spId,wIdx){musePrompt('Nova entrada','Texto da entrada:').then(t=>{if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.entries.push({date:new Date().toLocaleDateString('pt-BR'),text:t});saveState();render();});}
+function addFeedPost(spId,wIdx){musePrompt('Novo post','Texto do post:').then(t=>{if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.posts.unshift({text:t,time:new Date().toLocaleString('pt-BR')});saveState();render();});}
+function updateMapLabel(spId,wIdx){musePrompt('Alterar local','Nome do local:').then(l=>{if(!l)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.label=l;saveState();render();});}
 
 // ========== ACCORDION FUNCTIONS ==========
 function toggleAccCat(spId,wIdx,catIdx){
@@ -971,18 +1077,21 @@ function toggleAccCat(spId,wIdx,catIdx){
   if(sp&&sp.widgets[wIdx]){ sp.widgets[wIdx].data.categories[catIdx].expanded=!sp.widgets[wIdx].data.categories[catIdx].expanded; saveState(); render(); }
 }
 function addAccCat(spId,wIdx){
-  const t=prompt('Nome da categoria:');
-  if(!t||!t.trim())return;
-  const sp=state.subpages.find(s=>s.id===spId);
-  if(sp&&sp.widgets[wIdx]){
-    sp.widgets[wIdx].data.categories.push({id:genId(),title:t.trim(),icon:'✦',desc:'Descrição da categoria...',expanded:false,items:[]});
-    saveState();render();
-  }
+  musePrompt('Nova categoria','Nome da categoria:').then(t => {
+    if(!t||!t.trim())return;
+    const sp=state.subpages.find(s=>s.id===spId);
+    if(sp&&sp.widgets[wIdx]){
+      sp.widgets[wIdx].data.categories.push({id:genId(),title:t.trim(),icon:'✦',desc:'Descrição da categoria...',expanded:false,items:[]});
+      saveState();render();
+    }
+  });
 }
 function removeAccCat(spId,wIdx,catIdx){
-  if(!confirm('Remover esta categoria e todos os seus itens?'))return;
-  const sp=state.subpages.find(s=>s.id===spId);
-  if(sp&&sp.widgets[wIdx]){sp.widgets[wIdx].data.categories.splice(catIdx,1);saveState();render();}
+  museConfirm('Remover categoria','Remover esta categoria e todos os seus itens?').then(ok => {
+    if(!ok) return;
+    const sp=state.subpages.find(s=>s.id===spId);
+    if(sp&&sp.widgets[wIdx]){sp.widgets[wIdx].data.categories.splice(catIdx,1);saveState();render();}
+  });
 }
 function updateAccCatDesc(spId,wIdx,catIdx,val){
   const sp=state.subpages.find(s=>s.id===spId);
@@ -990,13 +1099,14 @@ function updateAccCatDesc(spId,wIdx,catIdx,val){
   saveState();
 }
 function addAccItem(spId,wIdx,catIdx){
-  const t=prompt('Nome do item:');
-  if(!t||!t.trim())return;
-  const sp=state.subpages.find(s=>s.id===spId);
-  if(sp&&sp.widgets[wIdx]){
-    sp.widgets[wIdx].data.categories[catIdx].items.push({id:genId(),text:t.trim(),content:''});
-    saveState();render();
-  }
+  musePrompt('Novo item','Nome do item:').then(t => {
+    if(!t||!t.trim())return;
+    const sp=state.subpages.find(s=>s.id===spId);
+    if(sp&&sp.widgets[wIdx]){
+      sp.widgets[wIdx].data.categories[catIdx].items.push({id:genId(),text:t.trim(),content:''});
+      saveState();render();
+    }
+  });
 }
 function removeAccItem(spId,wIdx,catIdx,itemIdx){
   const sp=state.subpages.find(s=>s.id===spId);
@@ -1017,16 +1127,35 @@ function openAccDetail(spId,wIdx,catIdx,itemIdx){
   document.getElementById('accDetailOverlay').classList.add('open');
 }
 function closeAccDetail(){
+  accDetailCtx=null;
+  document.getElementById('accDetailOverlay').classList.remove('open');
+}
+function saveAndCloseAccDetail(){
   if(accDetailCtx){
     const {spId,wIdx,catIdx,itemIdx}=accDetailCtx;
     const sp=state.subpages.find(s=>s.id===spId);
     if(sp&&sp.widgets[wIdx]){
       sp.widgets[wIdx].data.categories[catIdx].items[itemIdx].content=document.getElementById('accDetailContent').innerHTML;
       saveState();
+      render();
     }
   }
-  accDetailCtx=null;
-  document.getElementById('accDetailOverlay').classList.remove('open');
+  closeAccDetail();
+}
+function renameAccItemFromModal(){
+  if(!accDetailCtx) return;
+  musePrompt('Renomear item', 'Novo nome:').then(newName => {
+    if(newName && newName.trim()){
+      const {spId,wIdx,catIdx,itemIdx}=accDetailCtx;
+      const sp=state.subpages.find(s=>s.id===spId);
+      if(sp&&sp.widgets[wIdx]){
+        sp.widgets[wIdx].data.categories[catIdx].items[itemIdx].text = newName.trim();
+        document.getElementById('accDetailTitle').textContent = newName.trim();
+        saveState();
+        render();
+      }
+    }
+  });
 }
 document.getElementById('accDetailOverlay').addEventListener('click',function(e){if(e.target===this)closeAccDetail();});
 
@@ -1125,6 +1254,10 @@ loadState();
 document.getElementById('themeToggle').innerHTML = state.theme === 'dark' ? ICONS.moon : ICONS.sun;
 initSplash();
 setTimeout(() => render(), 100);
+
+// Generic modal: close on overlay click, submit on Enter
+document.getElementById('museModalOverlay').addEventListener('click', function(e) { if(e.target === this) museModalResolve(null); });
+document.getElementById('museModalInput').addEventListener('keydown', function(e) { if(e.key === 'Enter') { e.preventDefault(); document.getElementById('museModalOk').click(); } });
 
 </script>
 </body>
