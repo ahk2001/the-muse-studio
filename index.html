@@ -96,12 +96,26 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
 .category-card:nth-child(1){animation-delay:.15s}.category-card:nth-child(2){animation-delay:.25s}.category-card:nth-child(3){animation-delay:.35s}.category-card:nth-child(4){animation-delay:.45s}
 .category-card:hover{transform:translateX(4px);border-color:var(--border2);box-shadow:var(--shadow)}
 .category-card:active{transform:scale(.98)}
-.cat-img{width:70px;height:70px;flex-shrink:0;position:relative;overflow:hidden}
-.cat-img.beauty{background:linear-gradient(135deg,#2a1f2e,#1e1525)}
-.cat-img.mind{background:linear-gradient(135deg,#1a2030,#151a28)}
-.cat-img.ugc{background:linear-gradient(135deg,#1a2520,#152520)}
-.cat-img.lab{background:linear-gradient(135deg,#2a2518,#201c12)}
-.cat-img.custom{background:linear-gradient(135deg,#1e1e28,#18182a)}
+.cat-img{width:70px;height:70px;flex-shrink:0;position:relative;overflow:hidden;background-size:cover;background-position:center}
+.cat-img.beauty{background-color:#2a1f2e;background-image:linear-gradient(135deg,#2a1f2e,#1e1525)}
+.cat-img.mind{background-color:#1a2030;background-image:linear-gradient(135deg,#1a2030,#151a28)}
+.cat-img.ugc{background-color:#1a2520;background-image:linear-gradient(135deg,#1a2520,#152520)}
+.cat-img.lab{background-color:#2a2518;background-image:linear-gradient(135deg,#2a2518,#201c12)}
+.cat-img.custom{background-color:#1e1e28;background-image:linear-gradient(135deg,#1e1e28,#18182a)}
+.cat-img-edit{position:absolute;bottom:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#fff;opacity:0;transition:opacity .25s;cursor:pointer;z-index:2}
+.category-card:hover .cat-img-edit{opacity:1}
+
+/* SUBPAGE COVER */
+.sp-cover{width:100%;height:160px;background:var(--card2);position:relative;overflow:hidden;background-size:cover;background-position:center}
+.sp-cover-edit{position:absolute;bottom:10px;right:10px;padding:5px 10px;border-radius:6px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);font-size:.68rem;color:#fff;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .2s}
+.sp-cover-edit:hover{background:rgba(0,0,0,.75)}
+.sp-clock-row{display:flex;gap:6px;align-items:center;justify-content:center;padding:14px 16px 0;flex-shrink:0}
+.sp-clock-row .clock-digit{font-size:1rem;padding:6px 8px;width:36px}
+.sp-clock-row .clock-sep{font-size:.9rem}
+.sp-clock-date{font-size:.6rem;color:var(--text3);padding:2px 16px 0;text-align:center}
+.sp-description{padding:8px 16px 16px;text-align:center}
+.sp-description p{font-size:.78rem;color:var(--text2);line-height:1.5;outline:none;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid transparent;transition:border-color .2s,background .2s;display:inline-block;max-width:100%}
+.sp-description p:focus{border-color:var(--accent);background:var(--accent-bg)}
 .cat-info{flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
 .cat-info .cat-title{display:flex;align-items:center;gap:6px;font-size:.9rem;font-weight:600}
 .cat-info .cat-icon{font-size:.85rem;opacity:.7}
@@ -249,6 +263,50 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
 .w-feed-post .fp-text{font-size:.8rem;line-height:1.5}
 .w-map{width:100%;height:200px;border-radius:var(--radius-sm);background:var(--card2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text3);font-size:.8rem}
 .w-mini-cal{font-size:.75rem}
+
+/* ACCORDION WIDGET */
+.w-accordion{display:flex;flex-direction:column;gap:8px}
+.w-acc-cat{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;transition:border-color .25s}
+.w-acc-cat.open{border-color:var(--border2)}
+.w-acc-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .2s;user-select:none}
+.w-acc-header:hover{background:var(--card2)}
+.w-acc-header .acc-icon{font-size:.85rem;opacity:.6;flex-shrink:0}
+.w-acc-header .acc-title{flex:1;font-size:.85rem;font-weight:600}
+.w-acc-header .acc-actions{display:flex;gap:4px;align-items:center}
+.w-acc-header .acc-arrow{font-size:.75rem;color:var(--text3);transition:transform .3s var(--transition);flex-shrink:0}
+.w-acc-cat.open .acc-arrow{transform:rotate(180deg)}
+.w-acc-body{max-height:0;overflow:hidden;transition:max-height .35s var(--transition),padding .35s}
+.w-acc-cat.open .w-acc-body{max-height:800px;padding:0 14px 14px}
+.w-acc-desc{font-size:.72rem;color:var(--text3);font-style:italic;margin-bottom:10px;line-height:1.4}
+.w-acc-items{display:flex;flex-direction:column;gap:2px}
+.w-acc-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;font-size:.8rem;cursor:pointer;transition:background .2s}
+.w-acc-item:hover{background:var(--card2)}
+.w-acc-item .acc-dash{color:var(--text3);font-weight:300;flex-shrink:0}
+.w-acc-item span{flex:1}
+.w-acc-item .acc-item-edit{opacity:0;transition:opacity .2s;font-size:.7rem;color:var(--text3)}
+.w-acc-item:hover .acc-item-edit{opacity:.6}
+.w-acc-item .acc-item-edit:hover{opacity:1;color:var(--accent)}
+.w-acc-add{display:flex;align-items:center;gap:6px;padding:6px 10px;margin-top:4px;font-size:.75rem;color:var(--text3);cursor:pointer;border-radius:6px;transition:all .2s}
+.w-acc-add:hover{color:var(--accent);background:var(--accent-bg)}
+.w-acc-cat-add{border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:.78rem;color:var(--text3);cursor:pointer;transition:all .25s}
+.w-acc-cat-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+
+/* ACCORDION DETAIL MODAL */
+.acc-detail-overlay{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;padding:20px}
+.acc-detail-overlay.open{opacity:1;visibility:visible}
+.acc-detail-modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:440px;max-height:80vh;display:flex;flex-direction:column;transform:scale(.92);opacity:0;transition:transform .3s var(--transition),opacity .3s}
+.acc-detail-overlay.open .acc-detail-modal{transform:scale(1);opacity:1}
+.acc-detail-top{padding:20px 20px 0;display:flex;flex-direction:column;gap:4px;position:relative}
+.acc-detail-cat{font-size:.65rem;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:4px}
+.acc-detail-title{font-size:1.1rem;font-family:var(--font-title);font-weight:600}
+.acc-detail-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
+.acc-detail-close:hover{background:var(--card)}
+.acc-detail-close svg{width:14px;height:14px;stroke:var(--text2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.acc-detail-body{padding:16px 20px 20px;flex:1;overflow-y:auto}
+.acc-detail-label{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;font-weight:500}
+.acc-detail-content{min-height:140px;padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:.82rem;line-height:1.6;color:var(--text);outline:none;transition:border-color .25s,background .25s;white-space:pre-wrap}
+.acc-detail-content:empty::before{content:attr(data-placeholder);color:var(--text3);font-style:italic}
+.acc-detail-content:focus{border-color:var(--accent);background:var(--accent-bg)}
 .small-btn{font-size:.7rem;padding:4px 10px;border-radius:6px;background:var(--card2);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s}
 .small-btn:hover{border-color:var(--accent);color:var(--accent)}
 .small-btn.accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
@@ -301,6 +359,21 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
   </div>
 </div>
 
+<!-- ACCORDION DETAIL MODAL -->
+<div class="acc-detail-overlay" id="accDetailOverlay">
+  <div class="acc-detail-modal">
+    <div class="acc-detail-top">
+      <div class="acc-detail-cat" id="accDetailCat"></div>
+      <div class="acc-detail-title" id="accDetailTitle"></div>
+      <button class="acc-detail-close" onclick="closeAccDetail()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="acc-detail-body">
+      <div class="acc-detail-label">CONTEÚDO</div>
+      <div class="acc-detail-content" id="accDetailContent" contenteditable="true" data-placeholder="Clique para adicionar conteúdo a esta subpágina..."></div>
+    </div>
+  </div>
+</div>
+
 <!-- MAIN APP -->
 <div id="app">
   <header class="app-header">
@@ -323,10 +396,10 @@ const DEFAULT_STATE = {
   theme: 'dark',
   alert: { title: 'CUIDADO COM O FÍGADO', body: 'Leia a embalagem do suplemento. Verificar vitaminas com médico antes de usar. Prioridade máxima.' },
   subpages: [
-    { id:'beauty-hub', name:'Beauty Hub', icon:'✧', desc:'Rotina de beleza — diário ao anual', gradient:'beauty', widgets:[], favorite:false, deleted:false },
-    { id:'mind-soul', name:'Mind & Soul', icon:'◑', desc:'Estudos, idiomas e espiritualidade', gradient:'mind', widgets:[], favorite:false, deleted:false },
-    { id:'ugc-studio', name:'UGC Studio', icon:'▢', desc:'Conteúdo, ideias e produção', gradient:'ugc', widgets:[], favorite:false, deleted:false },
-    { id:'lab-pesquisas', name:'Lab Pesquisas', icon:'◎', desc:'Itens marcados com P', gradient:'lab', widgets:[], favorite:false, deleted:false }
+    { id:'beauty-hub', name:'Beauty Hub', icon:'✧', desc:'Rotina de beleza — diário ao anual', longDesc:'Organize sua rotina de skincare, cabelo e bem-estar.', gradient:'beauty', coverImage:'', widgets:[], favorite:false, deleted:false },
+    { id:'mind-soul', name:'Mind & Soul', icon:'◑', desc:'Estudos, idiomas e espiritualidade', longDesc:'Estudos, idiomas, leituras e crescimento pessoal.', gradient:'mind', coverImage:'', widgets:[], favorite:false, deleted:false },
+    { id:'ugc-studio', name:'UGC Studio', icon:'▢', desc:'Conteúdo, ideias e produção', longDesc:'Ideias, produções e planejamento de conteúdo.', gradient:'ugc', coverImage:'', widgets:[], favorite:false, deleted:false },
+    { id:'lab-pesquisas', name:'Lab Pesquisas', icon:'◎', desc:'Itens marcados com P', longDesc:'Pesquisas, referências e itens para investigar.', gradient:'lab', coverImage:'', widgets:[], favorite:false, deleted:false }
   ],
   events: {},
   currentView: 'home',
@@ -373,7 +446,8 @@ const WIDGET_TYPES = [
   { type:'cronograma', label:'Cronograma', icon:'◫' },
   { type:'feed', label:'Feed', icon:'⊞⊞' },
   { type:'mapa', label:'Mapa', icon:'◧' },
-  { type:'calendario', label:'Calendário', icon:'▦' }
+  { type:'calendario', label:'Calendário', icon:'▦' },
+  { type:'acordeao', label:'Acordeão', icon:'▤' }
 ];
 
 const DAYS_PT = ['D','S','T','Q','Q','S','S'];
@@ -401,15 +475,24 @@ function toggleTheme() {
 let clockInterval;
 function startClock() {
   function update() {
-    const el = document.getElementById('clockDigits');
-    const dateEl = document.getElementById('clockDate');
-    if (!el) return;
     const now = new Date();
     const h = String(now.getHours()).padStart(2,'0');
     const m = String(now.getMinutes()).padStart(2,'0');
     const s = String(now.getSeconds()).padStart(2,'0');
-    el.innerHTML = `<span class="clock-digit">${h}</span><span class="clock-sep">:</span><span class="clock-digit">${m}</span><span class="clock-sep">:</span><span class="clock-digit">${s}</span>`;
-    if(dateEl) dateEl.textContent = `${WEEKDAYS_PT[now.getDay()]}, ${now.getDate()} de ${MONTHS_PT[now.getMonth()]}`;
+    const clockHTML = `<span class="clock-digit">${h}</span><span class="clock-sep">:</span><span class="clock-digit">${m}</span><span class="clock-sep">:</span><span class="clock-digit">${s}</span>`;
+    const dateText = `${WEEKDAYS_PT[now.getDay()]}, ${now.getDate()} de ${MONTHS_PT[now.getMonth()]}`;
+
+    // Home clock
+    const el = document.getElementById('clockDigits');
+    const dateEl = document.getElementById('clockDate');
+    if(el) el.innerHTML = clockHTML;
+    if(dateEl) dateEl.textContent = dateText;
+
+    // Subpage clock
+    const spEl = document.getElementById('spClockDigits');
+    const spDateEl = document.getElementById('spClockDate');
+    if(spEl) spEl.innerHTML = clockHTML;
+    if(spDateEl) spDateEl.textContent = dateText;
   }
   update();
   clearInterval(clockInterval);
@@ -469,7 +552,9 @@ function renderHome(container) {
     <div class="category-list" id="categoryList">
       ${activeSubpages.map((s,i) => `
         <div class="category-card" onclick="navigate('subpage','${s.id}')" style="animation-delay:${0.15+i*0.1}s">
-          <div class="cat-img ${s.gradient || 'custom'}"></div>
+          <div class="cat-img ${s.gradient || 'custom'}" ${s.coverImage ? `style="background-image:url('${s.coverImage}')"` : ''}>
+            <span class="cat-img-edit" onclick="event.stopPropagation();changeCoverImage('${s.id}')" title="Trocar capa">✎</span>
+          </div>
           <div class="cat-info">
             <div class="cat-title"><span class="cat-icon">${s.icon}</span>${s.name}</div>
             <div class="cat-desc">${s.desc}</div>
@@ -629,7 +714,7 @@ function addSubpage() {
   if(!name || !name.trim()) return;
   state.subpages.push({
     id: genId(), name: name.trim(), icon:'◇', desc:'Nova subpágina personalizada',
-    gradient:'custom', widgets:[], favorite:false, deleted:false
+    longDesc:'Adicione uma descrição para esta subpágina.', gradient:'custom', coverImage:'', widgets:[], favorite:false, deleted:false
   });
   saveState(); render();
 }
@@ -659,8 +744,17 @@ function toggleFavorite(id) {
 function renderSubpage(container) {
   const sp = state.subpages.find(s => s.id === state.currentSubpage);
   if(!sp) { navigate('home'); return; }
+  if(!sp.longDesc) sp.longDesc = '';
+  if(!sp.coverImage) sp.coverImage = '';
+
+  const coverStyle = sp.coverImage
+    ? `background-image:url('${sp.coverImage}')`
+    : `background:linear-gradient(135deg, var(--card2), var(--card))`;
 
   container.innerHTML = `
+    <div class="sp-cover" style="${coverStyle}">
+      <span class="sp-cover-edit" onclick="changeCoverImage('${sp.id}')">✎ Alterar capa</span>
+    </div>
     <div class="subpage-header">
       <button class="back-btn" onclick="navigate('home')">${ICONS.back}</button>
       <div class="subpage-title" contenteditable="true" id="spTitle">${sp.name}</div>
@@ -669,6 +763,11 @@ function renderSubpage(container) {
         <button class="icon-btn" onclick="deleteSubpage('${sp.id}')" title="Excluir">${ICONS.trash}</button>
       </div>
     </div>
+    <div class="sp-description">
+      <p contenteditable="true" id="spDesc" placeholder="Adicione uma descrição...">${sp.longDesc || 'Clique para adicionar uma descrição...'}</p>
+    </div>
+    <div class="sp-clock-row" id="spClockDigits"></div>
+    <div class="sp-clock-date" id="spClockDate"></div>
     <div class="widget-list" id="widgetList">
       ${sp.widgets.map((w,i) => renderWidget(w, i, sp.id)).join('')}
     </div>
@@ -680,7 +779,31 @@ function renderSubpage(container) {
   setTimeout(() => {
     const t = document.getElementById('spTitle');
     if(t) t.addEventListener('blur', () => { sp.name = t.textContent.trim() || sp.name; saveState(); });
+    const d = document.getElementById('spDesc');
+    if(d) d.addEventListener('blur', () => { sp.longDesc = d.textContent.trim(); saveState(); });
   }, 50);
+}
+
+// ========== COVER IMAGE ==========
+function changeCoverImage(spId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const sp = state.subpages.find(s => s.id === spId);
+      if(sp) {
+        sp.coverImage = ev.target.result;
+        saveState();
+        render();
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
 }
 
 // ========== WIDGET ENGINE ==========
@@ -696,6 +819,12 @@ function getDefaultData(type) {
     case 'feed': return { posts:[{text:'Primeiro post do feed.',time:new Date().toLocaleString('pt-BR')}] };
     case 'mapa': return { label:'São Paulo, Brasil' };
     case 'calendario': return {};
+    case 'acordeao': return { categories:[
+      { id:genId(), title:'Nova Categoria', icon:'✦', desc:'Descrição da categoria...', expanded:true, items:[
+        { id:genId(), text:'Primeiro item', content:'' },
+        { id:genId(), text:'Segundo item', content:'' }
+      ]}
+    ]};
     default: return {};
   }
 }
@@ -775,6 +904,40 @@ function renderWidget(w, idx, spId) {
     case 'calendario':
       body = `<div class="w-mini-cal" style="font-size:.75rem;color:var(--text2)">Calendário embutido — veja o calendário principal na Home.</div>`;
       break;
+    case 'acordeao':
+      body = `<div class="w-accordion">
+        ${(w.data.categories||[]).map((cat,ci) => `
+          <div class="w-acc-cat ${cat.expanded?'open':''}" id="acc_${w.id}_${ci}">
+            <div class="w-acc-header" onclick="toggleAccCat('${spId}',${idx},${ci})">
+              <span class="acc-icon">${cat.icon||'✦'}</span>
+              <span class="acc-title">${cat.title}</span>
+              <span class="acc-actions">
+                <button class="widget-delete" onclick="event.stopPropagation();removeAccCat('${spId}',${idx},${ci})" title="Remover categoria" style="font-size:.65rem">✕</button>
+              </span>
+              <span class="acc-arrow">▾</span>
+            </div>
+            <div class="w-acc-body">
+              <div class="w-acc-desc" contenteditable="true" onblur="updateAccCatDesc('${spId}',${idx},${ci},this.textContent)">${cat.desc}</div>
+              <div class="w-acc-items">
+                ${cat.items.map((item,ii) => `
+                  <div class="w-acc-item" onclick="openAccDetail('${spId}',${idx},${ci},${ii})">
+                    <span class="acc-dash">—</span>
+                    <span>${item.text}</span>
+                    <button class="acc-item-edit" onclick="event.stopPropagation();removeAccItem('${spId}',${idx},${ci},${ii})" title="Remover">✕</button>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="w-acc-add" onclick="addAccItem('${spId}',${idx},${ci})">
+                <span>＋</span> Adicionar item
+              </div>
+            </div>
+          </div>
+        `).join('')}
+        <div class="w-acc-cat-add" onclick="addAccCat('${spId}',${idx})">
+          <span>＋</span> Adicionar categoria
+        </div>
+      </div>`;
+      break;
   }
 
   return `<div class="widget-container" style="animation-delay:${idx*0.08}s">
@@ -801,6 +964,71 @@ function updatePanelMetric(spId,wIdx,mIdx,key,val){const sp=state.subpages.find(
 function addTimelineEntry(spId,wIdx){const t=prompt('Texto:');if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.entries.push({date:new Date().toLocaleDateString('pt-BR'),text:t});saveState();render();}
 function addFeedPost(spId,wIdx){const t=prompt('Post:');if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.posts.unshift({text:t,time:new Date().toLocaleString('pt-BR')});saveState();render();}
 function updateMapLabel(spId,wIdx){const l=prompt('Local:');if(!l)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.label=l;saveState();render();}
+
+// ========== ACCORDION FUNCTIONS ==========
+function toggleAccCat(spId,wIdx,catIdx){
+  const sp=state.subpages.find(s=>s.id===spId);
+  if(sp&&sp.widgets[wIdx]){ sp.widgets[wIdx].data.categories[catIdx].expanded=!sp.widgets[wIdx].data.categories[catIdx].expanded; saveState(); render(); }
+}
+function addAccCat(spId,wIdx){
+  const t=prompt('Nome da categoria:');
+  if(!t||!t.trim())return;
+  const sp=state.subpages.find(s=>s.id===spId);
+  if(sp&&sp.widgets[wIdx]){
+    sp.widgets[wIdx].data.categories.push({id:genId(),title:t.trim(),icon:'✦',desc:'Descrição da categoria...',expanded:false,items:[]});
+    saveState();render();
+  }
+}
+function removeAccCat(spId,wIdx,catIdx){
+  if(!confirm('Remover esta categoria e todos os seus itens?'))return;
+  const sp=state.subpages.find(s=>s.id===spId);
+  if(sp&&sp.widgets[wIdx]){sp.widgets[wIdx].data.categories.splice(catIdx,1);saveState();render();}
+}
+function updateAccCatDesc(spId,wIdx,catIdx,val){
+  const sp=state.subpages.find(s=>s.id===spId);
+  if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.categories[catIdx].desc=val;
+  saveState();
+}
+function addAccItem(spId,wIdx,catIdx){
+  const t=prompt('Nome do item:');
+  if(!t||!t.trim())return;
+  const sp=state.subpages.find(s=>s.id===spId);
+  if(sp&&sp.widgets[wIdx]){
+    sp.widgets[wIdx].data.categories[catIdx].items.push({id:genId(),text:t.trim(),content:''});
+    saveState();render();
+  }
+}
+function removeAccItem(spId,wIdx,catIdx,itemIdx){
+  const sp=state.subpages.find(s=>s.id===spId);
+  if(sp&&sp.widgets[wIdx]){sp.widgets[wIdx].data.categories[catIdx].items.splice(itemIdx,1);saveState();render();}
+}
+
+// Accordion detail modal state
+let accDetailCtx=null;
+function openAccDetail(spId,wIdx,catIdx,itemIdx){
+  const sp=state.subpages.find(s=>s.id===spId);
+  if(!sp||!sp.widgets[wIdx])return;
+  const cat=sp.widgets[wIdx].data.categories[catIdx];
+  const item=cat.items[itemIdx];
+  accDetailCtx={spId,wIdx,catIdx,itemIdx};
+  document.getElementById('accDetailCat').innerHTML='✦ '+cat.title;
+  document.getElementById('accDetailTitle').textContent=item.text;
+  document.getElementById('accDetailContent').innerHTML=item.content||'';
+  document.getElementById('accDetailOverlay').classList.add('open');
+}
+function closeAccDetail(){
+  if(accDetailCtx){
+    const {spId,wIdx,catIdx,itemIdx}=accDetailCtx;
+    const sp=state.subpages.find(s=>s.id===spId);
+    if(sp&&sp.widgets[wIdx]){
+      sp.widgets[wIdx].data.categories[catIdx].items[itemIdx].content=document.getElementById('accDetailContent').innerHTML;
+      saveState();
+    }
+  }
+  accDetailCtx=null;
+  document.getElementById('accDetailOverlay').classList.remove('open');
+}
+document.getElementById('accDetailOverlay').addEventListener('click',function(e){if(e.target===this)closeAccDetail();});
 
 // ========== WIDGET PICKER ==========
 function openWidgetPicker(spId) {
