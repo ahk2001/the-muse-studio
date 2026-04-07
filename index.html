@@ -505,7 +505,16 @@ const DEFAULT_STATE = {
 
 let state;
 function loadState() {
-  try { const s = localStorage.getItem('muse_state'); state = s ? {...DEFAULT_STATE, ...JSON.parse(s)} : JSON.parse(JSON.stringify(DEFAULT_STATE)); }
+  try {
+    const s = localStorage.getItem('muse_state');
+    state = s ? {...DEFAULT_STATE, ...JSON.parse(s)} : JSON.parse(JSON.stringify(DEFAULT_STATE));
+    // Filter out widgets that are not 'acordeao' from existing subpages
+    state.subpages.forEach(sp => {
+      if (sp.widgets) {
+        sp.widgets = sp.widgets.filter(w => w.type === 'acordeao');
+      }
+    });
+  }
   catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
   document.documentElement.setAttribute('data-theme', state.theme);
 }
@@ -531,16 +540,6 @@ const ICONS = {
 };
 
 const WIDGET_TYPES = [
-  { type:'tabela', label:'Tabela', icon:'⊞' },
-  { type:'quadro', label:'Quadro', icon:'⊟' },
-  { type:'galeria', label:'Galeria', icon:'⊞⊞' },
-  { type:'lista', label:'Lista', icon:'☰' },
-  { type:'grafico', label:'Gráfico', icon:'◔' },
-  { type:'painel', label:'Painel', icon:'⊡' },
-  { type:'cronograma', label:'Cronograma', icon:'◫' },
-  { type:'feed', label:'Feed', icon:'⊞⊞' },
-  { type:'mapa', label:'Mapa', icon:'◧' },
-  { type:'calendario', label:'Calendário', icon:'▦' },
   { type:'acordeao', label:'Acordeão', icon:'▤' }
 ];
 
@@ -668,11 +667,7 @@ function renderHome(container) {
     <div class="summary-widget">
       <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">Hoje é ${today.getDate()} de ${MONTHS_PT[today.getMonth()].toLowerCase()} de ${today.getFullYear()}</div>
       ${activeSubpages.map(s => {
-        const wc = s.widgets.length;
-        const listWidgets = s.widgets.filter(w => w.type === 'lista');
-        let done = 0, total = 0;
-        listWidgets.forEach(w => { if(w.data && w.data.items) { total += w.data.items.length; done += w.data.items.filter(i=>i.done).length; }});
-        return `<div class="summary-item"><h4>${s.name}</h4><p><span>↳ ${wc} widget${wc!==1?'s':''}</span><span>↳ ${total>0?done+'/'+total+' tarefas':'0 tarefas'}</span></p></div>`;
+        return `<div class="summary-item"><h4>${s.name}</h4><p><span>↳ ${s.widgets.length} widget${s.widgets.length!==1?'s':''}</span></p></div>`;
       }).join('')}
     </div>
   `;
@@ -907,16 +902,6 @@ function changeCoverImage(spId) {
 // ========== WIDGET ENGINE ==========
 function getDefaultData(type) {
   switch(type) {
-    case 'tabela': return { columns:['Item','Status','Notas'], rows:[['Exemplo','Ativo','—']] };
-    case 'quadro': return { columns:[{name:'A Fazer',cards:['Tarefa 1']},{name:'Fazendo',cards:[]},{name:'Feito',cards:[]}] };
-    case 'galeria': return { items:[{title:'Item 1',color:'#2a2535'},{title:'Item 2',color:'#1e2530'},{title:'Item 3',color:'#252a1e'}] };
-    case 'lista': return { items:[{text:'Primeiro item da lista',done:false},{text:'Segundo item',done:false}] };
-    case 'grafico': return { labels:['Jan','Fev','Mar','Abr','Mai'], values:[30,55,40,70,45] };
-    case 'painel': return { metrics:[{label:'Total',value:'0'},{label:'Concluído',value:'0'},{label:'Pendente',value:'0'},{label:'Progresso',value:'0%'}] };
-    case 'cronograma': return { entries:[{date:'Hoje',text:'Início do cronograma'}] };
-    case 'feed': return { posts:[{text:'Primeiro post do feed.',time:new Date().toLocaleString('pt-BR')}] };
-    case 'mapa': return { label:'São Paulo, Brasil' };
-    case 'calendario': return {};
     case 'acordeao': return { categories:[
       { id:genId(), title:'Nova Categoria', icon:'✦', desc:'Descrição da categoria...', expanded:true, items:[
         { id:genId(), text:'Primeiro item', content:'' },
@@ -949,68 +934,7 @@ function removeWidget(spId, wIdx) {
 
 function renderWidget(w, idx, spId) {
   let body = '';
-  switch(w.type) {
-    case 'tabela':
-      body = `<table class="w-table"><thead><tr>${w.data.columns.map(c=>`<th>${c}</th>`).join('')}<th style="width:30px"></th></tr></thead><tbody>
-        ${w.data.rows.map((r,ri)=>`<tr>${r.map((c,ci)=>`<td contenteditable="true" onblur="updateTableCell('${spId}',${idx},${ri},${ci},this.textContent)">${c}</td>`).join('')}<td><button class="widget-delete" onclick="removeTableRow('${spId}',${idx},${ri})">✕</button></td></tr>`).join('')}
-      </tbody></table>
-      <button class="small-btn" style="margin-top:8px" onclick="addTableRow('${spId}',${idx})">+ Linha</button>`;
-      break;
-    case 'quadro':
-      body = `<div class="w-kanban">${w.data.columns.map((col,ci)=>`
-        <div class="w-kanban-col">
-          <h4>${col.name}</h4>
-          ${col.cards.map((card,cri)=>`<div class="w-kanban-card">${card}<span class="kcard-del" onclick="removeKanbanCard('${spId}',${idx},${ci},${cri})" title="Remover">✕</span></div>`).join('')}
-          <button class="small-btn" style="width:100%;margin-top:4px" onclick="addKanbanCard('${spId}',${idx},${ci})">+</button>
-        </div>`).join('')}</div>`;
-      break;
-    case 'galeria':
-      body = `<div class="w-gallery">${w.data.items.map((it,ii)=>`
-        <div class="w-gallery-item" style="background:${it.color}">${it.title}<span class="gal-del" onclick="removeGalleryItem('${spId}',${idx},${ii})" title="Remover">✕</span></div>`).join('')}
-        <div class="w-gallery-item" style="background:var(--card2);border:1px dashed var(--border);color:var(--text3)" onclick="addGalleryItem('${spId}',${idx})">+</div>
-      </div>`;
-      break;
-    case 'lista':
-      body = `<div>${w.data.items.map((it,ii)=>`
-        <div class="w-list-item ${it.done?'done':''}">
-          <input type="checkbox" ${it.done?'checked':''} onchange="toggleListItem('${spId}',${idx},${ii})">
-          <span>${it.text}</span>
-          <button class="widget-delete" onclick="removeListItem('${spId}',${idx},${ii})">✕</button>
-        </div>`).join('')}
-        <div class="inline-input-row"><input class="inline-input" placeholder="Novo item..." id="li_${w.id}"><button class="small-btn accent" onclick="addListItem('${spId}',${idx},'${w.id}')">OK</button></div>
-      </div>`;
-      break;
-    case 'grafico':
-      const maxVal = Math.max(...w.data.values, 1);
-      body = `<div class="w-chart">${w.data.values.map((v,i)=>`
-        <div class="w-chart-bar" style="height:${(v/maxVal)*100}%"><span>${w.data.labels[i]}: ${v}</span></div>`).join('')}
-      </div>`;
-      break;
-    case 'painel':
-      body = `<div class="w-panel">${w.data.metrics.map((m,mi)=>`
-        <div class="w-panel-card">
-          <div class="val" contenteditable="true" onblur="updatePanelMetric('${spId}',${idx},${mi},'value',this.textContent)">${m.value}</div>
-          <div class="lbl">${m.label}</div>
-        </div>`).join('')}</div>`;
-      break;
-    case 'cronograma':
-      body = `<div class="w-timeline">${w.data.entries.map((e,ei)=>`
-        <div class="w-timeline-item"><div class="tl-date">${e.date}</div><div class="tl-text">${e.text}</div></div>`).join('')}
-      </div><button class="small-btn" style="margin-top:8px" onclick="addTimelineEntry('${spId}',${idx})">+ Entrada</button>`;
-      break;
-    case 'feed':
-      body = `<div>${w.data.posts.map(p=>`
-        <div class="w-feed-post"><div class="fp-time">${p.time}</div><div class="fp-text">${p.text}</div></div>`).join('')}
-      </div><button class="small-btn" style="margin-top:8px" onclick="addFeedPost('${spId}',${idx})">+ Post</button>`;
-      break;
-    case 'mapa':
-      body = `<div class="w-map"><span style="font-size:1.8rem">◎</span><span>${w.data.label}</span>
-        <button class="small-btn" onclick="updateMapLabel('${spId}',${idx})">Alterar local</button></div>`;
-      break;
-    case 'calendario':
-      body = `<div class="w-mini-cal" style="font-size:.75rem;color:var(--text2)">Calendário embutido — veja o calendário principal na Home.</div>`;
-      break;
-    case 'acordeao':
+  if (w.type === 'acordeao') {
       body = `<div class="w-accordion">
         ${(w.data.categories||[]).map((cat,ci) => `
           <div class="w-acc-cat ${cat.expanded?'open':''}" id="acc_${w.id}_${ci}">
@@ -1043,7 +967,6 @@ function renderWidget(w, idx, spId) {
           <span>＋</span> Adicionar categoria
         </div>
       </div>`;
-      break;
   }
 
   return `<div class="widget-container" style="animation-delay:${idx*0.08}s">
@@ -1056,20 +979,7 @@ function renderWidget(w, idx, spId) {
 }
 
 // ========== WIDGET INTERACTION FUNCTIONS ==========
-function updateTableCell(spId,wIdx,rIdx,cIdx,val){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.rows[rIdx][cIdx]=val;saveState();}
-function addTableRow(spId,wIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx]){sp.widgets[wIdx].data.rows.push(sp.widgets[wIdx].data.columns.map(()=>'—'));saveState();render();}}
-function removeTableRow(spId,wIdx,rIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx]){sp.widgets[wIdx].data.rows.splice(rIdx,1);saveState();render();}}
-function addKanbanCard(spId,wIdx,colIdx){musePrompt('Novo card','Texto do card:').then(t=>{if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.columns[colIdx].cards.push(t);saveState();render();});}
-function removeKanbanCard(spId,wIdx,colIdx,cardIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.columns[colIdx].cards.splice(cardIdx,1);saveState();render();}
-function addGalleryItem(spId,wIdx){musePrompt('Novo item','Título do item:').then(t=>{if(!t)return;const colors=['#2a2535','#1e2530','#252a1e','#2a251e','#1e252a'];const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.push({title:t,color:colors[Math.floor(Math.random()*colors.length)]});saveState();render();});}
-function removeGalleryItem(spId,wIdx,iIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.splice(iIdx,1);saveState();render();}
-function toggleListItem(spId,wIdx,iIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items[iIdx].done=!sp.widgets[wIdx].data.items[iIdx].done;saveState();render();}
-function removeListItem(spId,wIdx,iIdx){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.splice(iIdx,1);saveState();render();}
-function addListItem(spId,wIdx,wId){const inp=document.getElementById('li_'+wId);if(!inp||!inp.value.trim())return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.items.push({text:inp.value.trim(),done:false});saveState();render();}
-function updatePanelMetric(spId,wIdx,mIdx,key,val){const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.metrics[mIdx][key]=val;saveState();}
-function addTimelineEntry(spId,wIdx){musePrompt('Nova entrada','Texto da entrada:').then(t=>{if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.entries.push({date:new Date().toLocaleDateString('pt-BR'),text:t});saveState();render();});}
-function addFeedPost(spId,wIdx){musePrompt('Novo post','Texto do post:').then(t=>{if(!t)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.posts.unshift({text:t,time:new Date().toLocaleString('pt-BR')});saveState();render();});}
-function updateMapLabel(spId,wIdx){musePrompt('Alterar local','Nome do local:').then(l=>{if(!l)return;const sp=state.subpages.find(s=>s.id===spId);if(sp&&sp.widgets[wIdx])sp.widgets[wIdx].data.label=l;saveState();render();});}
+// Removidas funções de interação de widgets deletados
 
 // ========== ACCORDION FUNCTIONS ==========
 function toggleAccCat(spId,wIdx,catIdx){
