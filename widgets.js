@@ -176,8 +176,14 @@ function renderCardapio(w, idx, spId) {
   };
 
   var getLinkIconHTML = function(mealData) {
-    if (mealData && typeof mealData === 'object' && mealData.link) {
-      return '<a href="' + DOMPurify.sanitize(mealData.link) + '" target="_blank" class="meal-link-icon" onclick="event.stopPropagation()" title="Abrir link">🔗</a>';
+    var url = '';
+    if (mealData && typeof mealData === 'object') {
+        if (mealData.links && mealData.links.length > 0) url = mealData.links[0].url;
+        else if (mealData.link) url = mealData.link;
+    }
+
+    if (url) {
+      return '<a href="' + DOMPurify.sanitize(url) + '" target="_blank" class="meal-link-icon" onclick="event.stopPropagation()" title="Abrir link">🔗</a>';
     }
     return '';
   };
@@ -1041,16 +1047,9 @@ var WIDGET_ACTION_HANDLERS = {
     insertLinkMenuRecipe: function() {
         if(typeof musePrompt !== 'undefined') {
             var ctx = window._menuRecipeCtx;
-            var currentLink = '';
-            if (ctx) {
-                var sp = state.subpages.find(function(s) { return s.id === ctx.spId; });
-                if (sp && sp.widgets[ctx.wIdx]) {
-                    var meal = sp.widgets[ctx.wIdx].data.days[ctx.dayIdx][ctx.mealType];
-                    currentLink = (typeof meal === 'object') ? (meal.link || '') : '';
-                }
-            }
-
-            musePrompt('Link da Receita (URL)', currentLink || 'https://').then(function(val) {
+            if (!ctx) return;
+            
+            musePrompt('Link da Receita (URL)', 'https://').then(function(val) {
                 if(!val || val === 'https://') return;
                 
                 musePrompt('Texto do Link (opcional)', 'Ver Receita').then(function(text) {
@@ -1061,15 +1060,29 @@ var WIDGET_ACTION_HANDLERS = {
                     if(el) { el.focus(); document.execCommand('insertHTML', false, html); }
 
                     // Salvar o link no objeto da refeição
-                    if (ctx) {
-                        var sp = state.subpages.find(function(s) { return s.id === ctx.spId; });
-                        if (sp && sp.widgets[ctx.wIdx]) {
-                            var m = sp.widgets[ctx.wIdx].data.days[ctx.dayIdx][ctx.mealType];
-                            if (typeof m === 'object') m.link = val;
+                    var sp = state.subpages.find(function(s) { return s.id === ctx.spId; });
+                    if (sp && sp.widgets[ctx.wIdx]) {
+                        var m = sp.widgets[ctx.wIdx].data.days[ctx.dayIdx][ctx.mealType];
+                        if (typeof m === 'object') {
+                            if (!m.links) m.links = [];
+                            m.links.push({ title: linkText, url: val });
+                            renderMenuRecipeLinks(m);
                         }
                     }
                 });
             });
+        }
+    },
+    removeMenuLink: function(lIdx) {
+        var ctx = window._menuRecipeCtx;
+        if (!ctx) return;
+        var sp = state.subpages.find(function(s) { return s.id === ctx.spId; });
+        if (sp && sp.widgets[ctx.wIdx]) {
+            var m = sp.widgets[ctx.wIdx].data.days[ctx.dayIdx][ctx.mealType];
+            if (m.links && m.links[lIdx]) {
+                m.links.splice(lIdx, 1);
+                renderMenuRecipeLinks(m);
+            }
         }
     }
 };
@@ -1112,6 +1125,24 @@ document.addEventListener('change', function(e) {
 });
 
 // Nota: Adicione as funções de modal/receita aqui se necessário
+function renderMenuRecipeLinks(meal) {
+    var listEl = document.getElementById('menuRecipeLinksList');
+    if (!listEl) return;
+    
+    if (!meal.links || meal.links.length === 0) {
+        listEl.innerHTML = '<div style="font-size:0.65rem;color:var(--text3);padding:10px;text-align:center">Nenhum link adicionado.</div>';
+        return;
+    }
+    
+    listEl.innerHTML = meal.links.map(function(lk, i) {
+        return '<div class="w-link-item">' +
+            '<div class="link-text">' + DOMPurify.sanitize(lk.title) + '</div>' +
+            '<a href="' + DOMPurify.sanitize(lk.url) + '" target="_blank" class="link-url">' + lk.url.replace(/^https?:\/\//, '') + '</a>' +
+            '<div class="w-link-del" data-action="removeMenuLink" data-args="' + i + '">✕</div>' +
+        '</div>';
+    }).join('');
+}
+
 function openMenuRecipe(spId, wIdx, dayIdx, mealType) {
     console.log("[Muse] Abrindo receita:", dayIdx, mealType);
     var sp = state.subpages.find(function(s) { return s.id === spId; });
@@ -1120,9 +1151,16 @@ function openMenuRecipe(spId, wIdx, dayIdx, mealType) {
     var meal = day[mealType];
     
     if (typeof meal === 'string') {
-        meal = { title: meal, recipe: '', link: '' };
+        meal = { title: meal, recipe: '', links: [] };
         day[mealType] = meal;
     }
+
+    // Migração de link único para array se necessário
+    if (meal.link && (!meal.links || meal.links.length === 0)) {
+        meal.links = [{ title: 'Ver Receita', url: meal.link }];
+        delete meal.link;
+    }
+    if (!meal.links) meal.links = [];
     
     window._menuRecipeCtx = { spId: spId, wIdx: wIdx, dayIdx: dayIdx, mealType: mealType };
     
@@ -1131,6 +1169,7 @@ function openMenuRecipe(spId, wIdx, dayIdx, mealType) {
     document.getElementById('menuRecipeTitle').value = meal.title || '';
     document.getElementById('menuRecipeContent').innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(meal.recipe || '', DP_CONFIG) : meal.recipe || '';
     
+    renderMenuRecipeLinks(meal);
     document.getElementById('menuRecipeOverlay').classList.add('open');
 }
 

@@ -395,6 +395,54 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
   background: var(--accent-bg);
   transform: scale(1.1);
 }
+.w-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.w-link-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  transition: border-color 0.2s;
+}
+.w-link-item:hover {
+  border-color: var(--border2);
+}
+.w-link-item .link-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+  font-weight: 500;
+}
+.w-link-item .link-url {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.65rem;
+  opacity: 0.8;
+}
+.w-link-item .link-url:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.w-link-del {
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 4px;
+  transition: opacity 0.2s, color 0.2s;
+}
+.w-link-del:hover {
+  opacity: 1;
+  color: var(--danger);
+}
 
 /* ACCORDION DETAIL MODAL */
 .acc-detail-overlay{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;padding:20px}
