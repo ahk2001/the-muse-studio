@@ -25,7 +25,7 @@ function getCustomDefaultData(type) {
     ]};
     case 'flashcards': return { cards: [{ id:genId(), front: 'Exemplo de Pergunta', back: 'Exemplo de Resposta', color: 'default' }], currentIdx: 0 };
     case 'links': return { links: [{ id:genId(), title: 'Google', url: 'https://google.com' }] };
-    case 'notas': return { content: 'Minha primeira nota rápida...' };
+    case 'notas': return { content: '' };
     case 'alerta': return { title: 'IMPORTANTE', text: 'Não esqueça de conferir os prazos!', type: 'warning' };
     case 'ciclo': return { lastDate: new Date().toISOString().split('T')[0], length: 28, symptoms: [] };
     case 'menu-sub': return { links: [] };

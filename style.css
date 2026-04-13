@@ -282,6 +282,7 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
 .w-bk-info{flex:1}.w-bk-title{font-size:0.85rem;font-weight:600}.w-bk-url{font-size:0.65rem;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
 
 .w-notes textarea{width:100%;background:none;border:none;color:var(--text);font-size:0.85rem;line-height:1.6;resize:none;min-height:80px;padding:5px}
+.w-notes textarea:focus::placeholder{color:transparent}
 
 .w-alert-box{padding:16px;border-radius:var(--radius);border-left:5px solid var(--accent);background:var(--accent-bg);display:flex;gap:12px;align-items:flex-start}
 .w-alert-box.danger{border-color:var(--danger);background:rgba(224,85,85,0.08);color:var(--danger)}
