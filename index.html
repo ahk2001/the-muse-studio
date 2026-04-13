@@ -88,6 +88,39 @@
   </div>
 </div>
 
+<!-- FLASHCARD EDIT MODAL -->
+<div class="acc-detail-overlay" id="fcEditOverlay">
+  <div class="acc-detail-modal">
+    <div class="acc-detail-top">
+      <div class="acc-detail-cat">🧠 FLASHCARD</div>
+      <div class="acc-detail-title">Editar Cartão</div>
+      <button class="acc-detail-close" data-action="closeFcEdit"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="acc-detail-body">
+      <div class="acc-detail-label">FRENTE (PERGUNTA/TERMO)</div>
+      <textarea class="inline-input" id="fcEditFront" placeholder="Digite a pergunta..." style="margin-bottom: 20px; font-weight: 500; min-height: 80px;"></textarea>
+      
+      <div class="acc-detail-label">VERSO (RESPOSTA/DEFINIÇÃO)</div>
+      <textarea class="inline-input" id="fcEditBack" placeholder="Digite a resposta..." style="margin-bottom: 20px; font-weight: 400; min-height: 80px;"></textarea>
+      
+      <div class="acc-detail-label">COR DO CARTÃO</div>
+      <div class="w-cycle-chips" id="fcColorSelector">
+        <div class="w-cycle-chip" data-action="setFcColor" data-args="default" data-color="default">Padrão</div>
+        <div class="w-cycle-chip" data-action="setFcColor" data-args="rose" data-color="rose" style="border-color:#ffaaaa; color:#ffaaaa">Rose</div>
+        <div class="w-cycle-chip" data-action="setFcColor" data-args="ocean" data-color="ocean" style="border-color:#aaccff; color:#aaccff">Ocean</div>
+        <div class="w-cycle-chip" data-action="setFcColor" data-args="forest" data-color="forest" style="border-color:#aaffaa; color:#aaffaa">Forest</div>
+        <div class="w-cycle-chip" data-action="setFcColor" data-args="sunset" data-color="sunset" style="border-color:#ffddaa; color:#ffddaa">Sunset</div>
+        <div class="w-cycle-chip" data-action="setFcColor" data-args="lavender" data-color="lavender" style="border-color:#ddaaff; color:#ddaaff">Lavender</div>
+      </div>
+    </div>
+    <div class="acc-detail-footer">
+      <button class="small-btn danger" data-action="removeFlashcard" style="margin-right:auto">Excluir Cartão</button>
+      <button class="small-btn" data-action="closeFcEdit">Cancelar</button>
+      <button class="small-btn accent" data-action="saveFcEdit">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
 <!-- GENERIC MODAL (replaces prompt/confirm) -->
 <div class="muse-modal-overlay" id="museModalOverlay">
   <div class="muse-modal">

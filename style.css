@@ -260,6 +260,22 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
 .w-fc-back{transform:rotateY(180deg)}.w-fc-lbl{font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px}
 .w-fc-text{font-size:1.1rem;font-weight:500;font-family:var(--font-title);line-height:1.4}
 .w-fc-nav{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:15px}.w-fc-count{font-size:0.75rem;color:var(--text3)}
+.w-fc-edit-btn{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:var(--text);opacity:0.4;transition:all 0.2s;z-index:10;backface-visibility:hidden}
+.w-fc-edit-btn:hover{opacity:1;background:rgba(0,0,0,0.3);transform:scale(1.1)}
+.w-fc-card.flipped .w-fc-edit-btn{transform:rotateY(180deg)}
+
+/* Flashcard Color Variants */
+.w-fc-side.rose { background: linear-gradient(135deg, #2d1a1a, #1a0f0f); border-color: #4d2a2a; }
+.w-fc-side.ocean { background: linear-gradient(135deg, #1a232d, #0f151a); border-color: #2a3d4d; }
+.w-fc-side.forest { background: linear-gradient(135deg, #1a2d1f, #0f1a12); border-color: #2a4d35; }
+.w-fc-side.sunset { background: linear-gradient(135deg, #2d251a, #1a150f); border-color: #4d3d2a; }
+.w-fc-side.lavender { background: linear-gradient(135deg, #231a2d, #150f1a); border-color: #3d2a4d; }
+
+[data-theme="light"] .w-fc-side.rose { background: #fff0f0; border-color: #ffcccc; color: #884444; }
+[data-theme="light"] .w-fc-side.ocean { background: #f0f7ff; border-color: #cce5ff; color: #446688; }
+[data-theme="light"] .w-fc-side.forest { background: #f0fff4; border-color: #ccffdd; color: #448855; }
+[data-theme="light"] .w-fc-side.sunset { background: #fffaf0; border-color: #ffeeb2; color: #887744; }
+[data-theme="light"] .w-fc-side.lavender { background: #fdf0ff; border-color: #f5ccff; color: #664488; }
 
 .w-bookmarks{display:flex;flex-direction:column;gap:5px}.w-bk-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:var(--radius-sm);border:1px solid var(--border);transition:all 0.2s}
 .w-bk-item:hover{border-color:var(--accent);transform:translateX(5px)}.w-bk-icon{width:28px;height:28px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:var(--text3)}
@@ -365,6 +381,19 @@ input,textarea{font-family:var(--font-body);background:none;border:none;color:va
   color: var(--text3);
   font-weight: 400;
   font-size: 0.75rem;
+}
+.meal-link-icon {
+  font-size: 0.8rem;
+  padding: 4px;
+  margin: -4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+.meal-link-icon:hover {
+  opacity: 1;
+  background: var(--accent-bg);
+  transform: scale(1.1);
 }
 
 /* ACCORDION DETAIL MODAL */

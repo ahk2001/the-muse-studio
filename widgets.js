@@ -23,7 +23,7 @@ function getCustomDefaultData(type) {
       { day: 'Quinta', lunch: {title:'', recipe:''}, dinner: {title:'', recipe:''} },
       { day: 'Sexta', lunch: {title:'', recipe:''}, dinner: {title:'', recipe:''} }
     ]};
-    case 'flashcards': return { cards: [{ id:genId(), front: 'Exemplo de Pergunta', back: 'Exemplo de Resposta' }], currentIdx: 0 };
+    case 'flashcards': return { cards: [{ id:genId(), front: 'Exemplo de Pergunta', back: 'Exemplo de Resposta', color: 'default' }], currentIdx: 0 };
     case 'links': return { links: [{ id:genId(), title: 'Google', url: 'https://google.com' }] };
     case 'notas': return { content: 'Minha primeira nota rápida...' };
     case 'alerta': return { title: 'IMPORTANTE', text: 'Não esqueça de conferir os prazos!', type: 'warning' };
@@ -175,6 +175,13 @@ function renderCardapio(w, idx, spId) {
     return mealData || '';
   };
 
+  var getLinkIconHTML = function(mealData) {
+    if (mealData && typeof mealData === 'object' && mealData.link) {
+      return '<a href="' + DOMPurify.sanitize(mealData.link) + '" target="_blank" class="meal-link-icon" onclick="event.stopPropagation()" title="Abrir link">🔗</a>';
+    }
+    return '';
+  };
+
   return '<div class="w-accordion">' +
     (w.data.days || []).map(function(d, di) {
       return '<div class="w-acc-cat" id="menu_' + w.id + '_' + di + '">' +
@@ -185,11 +192,17 @@ function renderCardapio(w, idx, spId) {
         '<div class="w-acc-body">' +
           '<div class="w-acc-items">' +
             '<div class="w-menu-meal" data-action="openMenuRecipe" data-args="' + spId + ',' + idx + ',' + di + ',lunch">' +
-              '<label>ALMOÇO</label>' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+                '<label>ALMOÇO</label>' +
+                getLinkIconHTML(d.lunch) +
+              '</div>' +
               '<div class="meal-title">' + DOMPurify.sanitize(getMealVal(d.lunch)) + '</div>' +
             '</div>' +
             '<div class="w-menu-meal" data-action="openMenuRecipe" data-args="' + spId + ',' + idx + ',' + di + ',dinner">' +
-              '<label>JANTAR</label>' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+                '<label>JANTAR</label>' +
+                getLinkIconHTML(d.dinner) +
+              '</div>' +
               '<div class="meal-title">' + DOMPurify.sanitize(getMealVal(d.dinner)) + '</div>' +
             '</div>' +
           '</div>' +
@@ -249,16 +262,20 @@ function renderFlashcards(w, idx, spId) {
   if(cards.length === 0) return '<div class="w-flashcards"><div style="font-size:0.7rem;color:var(--text3)">Nenhum cartão.</div></div>';
   var c = cards[w.data.currentIdx || 0];
   if(!c) return '<div class="w-flashcards"><div style="font-size:0.7rem;color:var(--text3)">Cartão inválido.</div></div>';
+  
+  var colorClass = (c.color && c.color !== 'default') ? c.color : '';
+
   return '<div class="w-flashcards-container">' +
     '<div class="w-flashcards">' +
       '<div class="w-fc-card" data-action="toggleFlashcard" data-args="' + spId + ',' + idx + '">' +
-        '<div class="w-fc-side">' +
+        '<button class="w-fc-edit-btn" data-action="openFcEdit" data-args="' + spId + ',' + idx + '" onclick="event.stopPropagation()">✎</button>' +
+        '<div class="w-fc-side ' + colorClass + '">' +
           '<div class="w-fc-lbl">FRENTE</div>' +
-          '<div class="w-fc-text" contenteditable="true" data-blur="updateFcData" data-args="' + spId + ',' + idx + ',front">' + DOMPurify.sanitize(c.front) + '</div>' +
+          '<div class="w-fc-text">' + DOMPurify.sanitize(c.front) + '</div>' +
         '</div>' +
-        '<div class="w-fc-side w-fc-back">' +
+        '<div class="w-fc-side w-fc-back ' + colorClass + '">' +
           '<div class="w-fc-lbl">VERSO</div>' +
-          '<div class="w-fc-text" contenteditable="true" data-blur="updateFcData" data-args="' + spId + ',' + idx + ',back">' + DOMPurify.sanitize(c.back) + '</div>' +
+          '<div class="w-fc-text">' + DOMPurify.sanitize(c.back) + '</div>' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -789,7 +806,7 @@ var WIDGET_ACTION_HANDLERS = {
         var w = getWidgetDataRef(spId, wIdx);
         if(w) {
             if(!w.data.cards) w.data.cards=[];
-            w.data.cards.push({id:genId(), front:'Nova Pergunta?', back:'Nova Resposta'});
+            w.data.cards.push({id:genId(), front:'Nova Pergunta?', back:'Nova Resposta', color: 'default'});
             w.data.currentIdx = w.data.cards.length - 1;
             saveState(); render();
         }
@@ -815,6 +832,73 @@ var WIDGET_ACTION_HANDLERS = {
             w.data.cards[w.data.currentIdx || 0][side] = val;
             saveState();
         }
+    },
+    openFcEdit: function(spId, wIdx) {
+        var w = getWidgetDataRef(spId, wIdx);
+        if(!w || !w.data.cards) return;
+        var c = w.data.cards[w.data.currentIdx || 0];
+        if(!c) return;
+        
+        window._fcEditCtx = { spId: spId, wIdx: wIdx };
+        document.getElementById('fcEditFront').value = c.front;
+        document.getElementById('fcEditBack').value = c.back;
+        
+        // Setup color selector
+        var chips = document.querySelectorAll('#fcColorSelector .w-cycle-chip');
+        chips.forEach(function(chip) {
+            var color = chip.getAttribute('data-color');
+            if(color === (c.color || 'default')) chip.classList.add('active');
+            else chip.classList.remove('active');
+        });
+        
+        document.getElementById('fcEditOverlay').classList.add('open');
+    },
+    saveFcEdit: function() {
+        var ctx = window._fcEditCtx;
+        if(ctx) {
+            var w = getWidgetDataRef(ctx.spId, ctx.wIdx);
+            if(w && w.data.cards) {
+                var c = w.data.cards[w.data.currentIdx || 0];
+                if(c) {
+                    c.front = document.getElementById('fcEditFront').value;
+                    c.back = document.getElementById('fcEditBack').value;
+                    
+                    var activeChip = document.querySelector('#fcColorSelector .w-cycle-chip.active');
+                    if(activeChip) c.color = activeChip.getAttribute('data-color');
+                    
+                    saveState();
+                    render();
+                }
+            }
+        }
+        document.getElementById('fcEditOverlay').classList.remove('open');
+    },
+    closeFcEdit: function() {
+        document.getElementById('fcEditOverlay').classList.remove('open');
+    },
+    removeFlashcard: function() {
+        var ctx = window._fcEditCtx;
+        if(ctx && typeof museConfirm !== 'undefined') {
+            museConfirm('Excluir Cartão', 'Deseja realmente excluir este cartão?').then(function(ok) {
+                if(ok) {
+                    var w = getWidgetDataRef(ctx.spId, ctx.wIdx);
+                    if(w && w.data.cards) {
+                        w.data.cards.splice(w.data.currentIdx || 0, 1);
+                        if(w.data.currentIdx >= w.data.cards.length) {
+                            w.data.currentIdx = Math.max(0, w.data.cards.length - 1);
+                        }
+                        saveState();
+                        render();
+                    }
+                    document.getElementById('fcEditOverlay').classList.remove('open');
+                }
+            });
+        }
+    },
+    setFcColor: function(spId, wIdx, color, arg3, el) {
+        var chips = document.querySelectorAll('#fcColorSelector .w-cycle-chip');
+        chips.forEach(function(chip) { chip.classList.remove('active'); });
+        if(el) el.classList.add('active');
     },
     // Links
     addLink: function(spId, wIdx) {
@@ -956,11 +1040,35 @@ var WIDGET_ACTION_HANDLERS = {
     },
     insertLinkMenuRecipe: function() {
         if(typeof musePrompt !== 'undefined') {
-            musePrompt('Inserir Link HTML', '<a href="..." target="_blank">Clique</a>').then(function(val) {
-                if(val) {
-                    var el = document.getElementById('menuRecipeContent');
-                    if(el) { el.focus(); document.execCommand('insertHTML', false, val); }
+            var ctx = window._menuRecipeCtx;
+            var currentLink = '';
+            if (ctx) {
+                var sp = state.subpages.find(function(s) { return s.id === ctx.spId; });
+                if (sp && sp.widgets[ctx.wIdx]) {
+                    var meal = sp.widgets[ctx.wIdx].data.days[ctx.dayIdx][ctx.mealType];
+                    currentLink = (typeof meal === 'object') ? (meal.link || '') : '';
                 }
+            }
+
+            musePrompt('Link da Receita (URL)', currentLink || 'https://').then(function(val) {
+                if(!val || val === 'https://') return;
+                
+                musePrompt('Texto do Link (opcional)', 'Ver Receita').then(function(text) {
+                    var linkText = text || 'Ver Receita';
+                    var html = '<a href="' + val + '" target="_blank" rel="noopener">' + linkText + '</a>';
+                    
+                    var el = document.getElementById('menuRecipeContent');
+                    if(el) { el.focus(); document.execCommand('insertHTML', false, html); }
+
+                    // Salvar o link no objeto da refeição
+                    if (ctx) {
+                        var sp = state.subpages.find(function(s) { return s.id === ctx.spId; });
+                        if (sp && sp.widgets[ctx.wIdx]) {
+                            var m = sp.widgets[ctx.wIdx].data.days[ctx.dayIdx][ctx.mealType];
+                            if (typeof m === 'object') m.link = val;
+                        }
+                    }
+                });
             });
         }
     }
@@ -1012,7 +1120,7 @@ function openMenuRecipe(spId, wIdx, dayIdx, mealType) {
     var meal = day[mealType];
     
     if (typeof meal === 'string') {
-        meal = { title: meal, recipe: '' };
+        meal = { title: meal, recipe: '', link: '' };
         day[mealType] = meal;
     }
     
