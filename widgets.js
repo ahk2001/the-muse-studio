@@ -27,7 +27,7 @@ function getCustomDefaultData(type) {
     case 'links': return { links: [{ id:genId(), title: 'Google', url: 'https://google.com' }] };
     case 'notas': return { content: '' };
     case 'alerta': return { title: 'IMPORTANTE', text: 'Não esqueça de conferir os prazos!', type: 'warning' };
-    case 'ciclo': return { lastDate: new Date().toISOString().split('T')[0], length: 28, symptoms: [] };
+    case 'ciclo': return { lastDate: new Date().toISOString().split('T')[0], length: 28, flowDuration: 5, symptoms: [] };
     case 'menu-sub': return { links: [] };
     case 'tarefas-adv': return { tasks: [
       { id:genId(), title: 'Tarefa Exemplo', status: false, priority: 'Média', date: new Date().toISOString().split('T')[0], tags: ['Geral'], notes: '' }
@@ -333,28 +333,79 @@ function renderAlerta(w, idx, spId) {
 
 function renderCiclo(w, idx, spId) {
   var t = new Date();
-  var last = new Date(w.data.lastDate);
+  t.setHours(0, 0, 0, 0); // Zera horas para comparação de dias
+  
+  var last = new Date(w.data.lastDate + 'T00:00:00');
+  var cycleLen = parseInt(w.data.length) || 28;
+  var flowLen = parseInt(w.data.flowDuration) || 5;
+  
   var diff = Math.floor((t - last) / (1000 * 60 * 60 * 24));
-  var daysToNext = w.data.length - diff;
-  if(daysToNext < 0) daysToNext = 0;
+  var dayOfCycle = (diff % cycleLen) + 1;
+  if (dayOfCycle <= 0) dayOfCycle = 1;
+
+  var nextPeriod = new Date(last);
+  nextPeriod.setDate(nextPeriod.getDate() + cycleLen);
+  var daysToNext = Math.ceil((nextPeriod - t) / (1000 * 60 * 60 * 24));
+  if (daysToNext < 0) daysToNext = 0;
+
+  var ovulation = new Date(nextPeriod);
+  ovulation.setDate(ovulation.getDate() - 14);
+  
+  var fertileStart = new Date(ovulation);
+  fertileStart.setDate(fertileStart.getDate() - 5);
+  
+  var fertileEnd = new Date(ovulation);
+  fertileEnd.setDate(fertileEnd.getDate() + 1);
+
+  // Determinar Fase
   var phase = 'Folicular';
-  if(diff < 5) phase = 'Menstruação';
-  else if(diff > 12 && diff < 16) phase = 'Ovulação';
-  else if(diff > 15) phase = 'Lútea';
+  var phaseColor = 'var(--text3)';
+  var statusMsg = 'Fase Folicular';
+  var healthTip = 'Bom momento para focar em exercícios de força.';
+  
+  if (diff >= 0 && diff < flowLen) {
+    phase = 'Menstruação';
+    phaseColor = 'var(--danger)';
+    statusMsg = 'Dia ' + (diff + 1) + ' do fluxo';
+    healthTip = 'Mantenha-se hidratada e use compressas mornas.';
+  } else if (t >= fertileStart && t <= fertileEnd) {
+    phase = 'Ovulatória';
+    phaseColor = '#7c4dff';
+    statusMsg = 'Janela Fértil: Chances altas';
+    healthTip = 'Você pode sentir um aumento na energia e libido.';
+  } else if (t > fertileEnd && t < nextPeriod) {
+    phase = 'Lútea';
+    phaseColor = 'var(--accent)';
+    statusMsg = 'Sua menstruação chega em ' + daysToNext + ' dias';
+    healthTip = 'Priorize o descanso e reduza o sódio.';
+  } else if (diff >= flowLen && t < fertileStart) {
+    phase = 'Folicular';
+    phaseColor = 'var(--success)';
+    statusMsg = 'Seu ciclo começou';
+    healthTip = 'Bom momento para focar em exercícios de força.';
+  }
 
   return '<div class="w-cycle">' +
     '<div class="w-cycle-header">' +
-      '<div class="w-cycle-circle">' +
-        '<div class="w-cycle-day">' + diff + '</div>' +
+      '<div class="w-cycle-circle" style="border-color:' + phaseColor + '">' +
+        '<div class="w-cycle-day">' + (diff >= 0 ? dayOfCycle : 1) + '</div>' +
         '<div class="w-cycle-lbl">Dia</div>' +
+        '<button class="w-cycle-quick-add" data-action="openCicloActions" data-args="' + spId + ',' + idx + '">＋</button>' +
       '</div>' +
-      '<div class="w-cycle-phase">' + phase + '</div>' +
-      '<div style="font-size:0.65rem;color:var(--text3);margin-top:8px">Faltam ' + daysToNext + ' dias</div>' +
+      '<div class="w-cycle-status">' +
+        '<div class="w-cycle-phase" style="background:' + phaseColor + '22; color:' + phaseColor + '">' + phase + '</div>' +
+        '<h4 class="w-cycle-main-msg">' + statusMsg + '</h4>' +
+        '<p class="w-cycle-tip"><span>💡 Dica:</span> ' + healthTip + '</p>' +
+      '</div>' +
     '</div>' +
-    '<div style="text-align:center;margin-bottom:10px">' +
-       '<button class="small-btn accent" data-action="promptCicloDate" data-args="' + spId + ',' + idx + '">Ajustar Início (Última: ' + w.data.lastDate.split('-').reverse().join('/') + ')</button>' +
+    '<div class="w-cycle-footer">' +
+       '<div class="w-cycle-stats">' +
+          '<span>Ciclo: ' + cycleLen + ' dias</span>' +
+          '<span>Fluxo: ' + flowLen + ' dias</span>' +
+       '</div>' +
+       '<button class="small-btn" style="width:100%" data-action="promptCicloSettings" data-args="' + spId + ',' + idx + '">Configurar Ciclo</button>' +
     '</div>' +
-    '<div style="font-size:0.7rem;margin-bottom:6px">Sintomas (Hoje)</div>' +
+    '<div style="font-size:0.7rem;margin-bottom:6px;font-weight:600">Sintomas (Hoje)</div>' +
     '<div class="w-cycle-chips">' +
       ['Cólica', 'Dor de Cabeça', 'Fadiga', 'Sensível', 'Gases'].map(function(s) {
         var active = (w.data.symptoms || []).includes(s);
@@ -963,6 +1014,37 @@ var WIDGET_ACTION_HANDLERS = {
         if(w) { w.data[field] = val; saveState(); }
     },
     // Ciclo
+    openCicloActions: function(spId, wIdx) {
+        var w = getWidgetDataRef(spId, wIdx);
+        if(!w) return;
+        if(typeof museConfirm !== 'undefined') {
+            museConfirm('Registrar Início', 'Sua menstruação começou hoje?').then(function(ok) {
+                if(ok) {
+                    w.data.lastDate = new Date().toISOString().split('T')[0];
+                    saveState(); render();
+                }
+            });
+        }
+    },
+    promptCicloSettings: function(spId, wIdx) {
+        var w = getWidgetDataRef(spId, wIdx);
+        if(!w) return;
+        if(typeof musePrompt !== 'undefined') {
+            musePrompt('Duração Média do Ciclo (dias)', w.data.length).then(function(len) {
+                if(!len) return;
+                var l = parseInt(len);
+                if(l > 0) {
+                    w.data.length = l;
+                    musePrompt('Duração da Menstruação (dias)', w.data.flowDuration).then(function(flow) {
+                        if(!flow) { saveState(); render(); return; }
+                        var f = parseInt(flow);
+                        if(f > 0) w.data.flowDuration = f;
+                        saveState(); render();
+                    });
+                }
+            });
+        }
+    },
     promptCicloDate: function(spId, wIdx) {
         var w = getWidgetDataRef(spId, wIdx);
         if(w && typeof musePrompt !== 'undefined') {
