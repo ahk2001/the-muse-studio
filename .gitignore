@@ -1,0 +1,16 @@
+# Ignorar arquivos temporários, logs e lixo de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# Ignorar arquivos do assistente de inteligência artificial (se houver)
+.gemini/
+.ai/
+
+# Ignorar rascunhos antigos, caso restem
+*.txt
+*.png
+*.jpg
+*.jpeg
+!assets/
