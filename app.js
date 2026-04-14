@@ -67,7 +67,8 @@ const DEFAULT_STATE = {
   currentSubpage: null,
   selectedDate: new Date().toISOString().split('T')[0],
   calMonth: new Date().getMonth(),
-  calYear: new Date().getFullYear()
+  calYear: new Date().getFullYear(),
+  pinnedSubpages: [] // IDs das subpáginas fixadas na barra inferior
 };
 
 let state;
@@ -75,6 +76,15 @@ function loadState() {
   try {
     const s = localStorage.getItem('muse_state');
     state = s ? {...DEFAULT_STATE, ...JSON.parse(s)} : JSON.parse(JSON.stringify(DEFAULT_STATE));
+    
+    // Migração: se pinnedSubpages estiver vazio, pega as 3 primeiras subpáginas ativas
+    if (!state.pinnedSubpages || state.pinnedSubpages.length === 0) {
+      state.pinnedSubpages = state.subpages
+        .filter(sp => !sp.deleted && !sp.isNested)
+        .slice(0, 3)
+        .map(sp => sp.id);
+    }
+
     state.subpages.forEach(sp => {
       if (sp.widgets) {
         sp.widgets.forEach(w => { if(w.type === 'pomodoro') w.data.isRunning = false; });
@@ -95,6 +105,7 @@ var ICONS = {
   beauty: '<svg viewBox="0 0 24 24"><path d="M12 3l1.5 4.5H18l-3.5 2.5L16 14.5 12 11.5l-4 3L9.5 10 6 7.5h4.5z"/></svg>',
   mind: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18"/><path d="M12 7v10M8 12h8"/></svg>',
   ugc: '<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>',
+  lab: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
   plus: '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
   chevLeft: '<svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>',
   chevRight: '<svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>',
@@ -102,6 +113,8 @@ var ICONS = {
   trash: '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
   star: '<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
   edit: '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  summary: '<svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
   moon: '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>',
   sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
   x: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
@@ -245,10 +258,10 @@ function renderHome(container) {
       <span>＋</span> Adicionar nova subpágina
     </div>
 
-    <div class="section-label">CALENDÁRIO</div>
+    <div class="section-label" id="sectionCalendar">CALENDÁRIO</div>
     ${renderCalendarHTML()}
 
-    <div class="section-label">RESUMO</div>
+    <div class="section-label" id="sectionSummary">RESUMO</div>
     <div class="summary-widget">
       <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">Hoje é ${today.getDate()} de ${MONTHS_PT[today.getMonth()].toLowerCase()} de ${today.getFullYear()}</div>
       ${activeSubpages.map(s => {
@@ -719,40 +732,73 @@ function renderSidebar() {
   const favs = state.subpages.filter(s => s.favorite && !s.deleted && !s.isNested);
   const trashed = state.subpages.filter(s => s.deleted);
 
+  const getSpIcon = (s) => {
+    const key = s.id.split('-')[0];
+    return ICONS[key] || `<span class="si-emoji">${s.icon}</span>`;
+  };
+
   const html = `
     <div class="sidebar-section">
       <div class="sidebar-section-header">
         <span>MENU</span>
-        <div class="sidebar-theme-toggle" data-action="toggleTheme">☽ ${state.theme==='dark'?'Escuro':'Claro'}</div>
+        <div class="sidebar-theme-toggle" data-action="toggleTheme">${state.theme==='dark'?'☽':'☀'} ${state.theme==='dark'?'Escuro':'Claro'}</div>
       </div>
+      
       <div class="sidebar-item ${state.currentView==='home'?'active':''}" data-action="sidebarNav" data-args="home">
-        <span class="si-icon">⌂</span> Início <span class="si-arrow">›</span>
+        <span class="si-icon">${ICONS.home}</span> Início <span class="si-arrow">›</span>
       </div>
+
+      <div class="sidebar-sub-label">SISTEMA</div>
+      <div class="sidebar-item" data-action="scrollToId" data-args="sectionCalendar">
+        <span class="si-icon">${ICONS.calendar}</span> Calendário <span class="si-arrow">›</span>
+      </div>
+      <div class="sidebar-item" data-action="scrollToId" data-args="sectionSummary">
+        <span class="si-icon">${ICONS.summary}</span> Resumo <span class="si-arrow">›</span>
+      </div>
+
+      <div class="sidebar-sub-label">WORKSPACES</div>
       ${active.map(s => `
         <div class="sidebar-item ${state.currentSubpage===s.id?'active':''}" data-action="sidebarNav" data-args="subpage,${s.id}">
-          <span class="si-icon">${s.icon}</span> ${DOMPurify.sanitize(s.name)} <span class="si-arrow">›</span>
+          <span class="si-icon">${getSpIcon(s)}</span> ${DOMPurify.sanitize(s.name)} <span class="si-arrow">›</span>
         </div>
       `).join('')}
     </div>
+
     <div class="sidebar-divider"></div>
+    
     <div class="sidebar-section">
-      <div class="sidebar-item" style="color:var(--accent)"><span class="si-icon">☆</span> Favoritos</div>
-      ${favs.length === 0 ? '<div style="padding:4px 14px;font-size:.7rem;color:var(--text3)">Nenhum favorito</div>' :
-        favs.map(s => `<div class="sidebar-item" data-action="sidebarNav" data-args="subpage,${s.id}"><span class="si-icon">${s.icon}</span> ${DOMPurify.sanitize(s.name)}</div>`).join('')}
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-section">
-      <div class="sidebar-item" style="color:var(--text3)"><span class="si-icon">🗑</span> Lixeira</div>
-      ${trashed.length === 0 ? '<div style="padding:4px 14px;font-size:.7rem;color:var(--text3)">Vazia</div>' :
-        trashed.map(s => `
-          <div class="sidebar-item" style="opacity:.6">
-            <span class="si-icon">${s.icon}</span> ${DOMPurify.sanitize(s.name)}
-            <span style="margin-left:auto;display:flex;gap:4px">
-              <button class="small-btn" data-action="restoreSubpage" data-args="${s.id}">↩</button>
-              <button class="small-btn" style="color:var(--danger)" data-action="permanentDelete" data-args="${s.id}">✕</button>
-            </span>
+      <div class="sidebar-sub-label" style="color:var(--accent)">FAVORITOS</div>
+      ${favs.length === 0 ? '<div class="sidebar-empty">Nenhum favorito</div>' :
+        favs.map(s => `
+          <div class="sidebar-item" data-action="sidebarNav" data-args="subpage,${s.id}">
+            <span class="si-icon">${getSpIcon(s)}</span> ${DOMPurify.sanitize(s.name)}
           </div>
         `).join('')}
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-sub-label">LIXEIRA</div>
+      ${trashed.length === 0 ? '<div class="sidebar-empty">Vazia</div>' :
+        trashed.map(s => `
+          <div class="sidebar-item trashed">
+            <span class="si-icon">${getSpIcon(s)}</span> ${DOMPurify.sanitize(s.name)}
+            <div class="si-actions">
+              <button class="small-btn" data-action="restoreSubpage" data-args="${s.id}" title="Restaurar">↩</button>
+              <button class="small-btn danger" data-action="permanentDelete" data-args="${s.id}" title="Excluir">✕</button>
+            </div>
+          </div>
+        `).join('')}
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-sub-label">CONFIGURAÇÕES</div>
+      <div class="sidebar-item" data-action="openBottomNavEditor">
+        <span class="si-icon">${ICONS.edit}</span> Barra Inferior <span class="si-arrow">›</span>
+      </div>
     </div>
   `;
   document.getElementById('sidebarContent').innerHTML = DOMPurify.sanitize(html, DP_CONFIG);
@@ -760,17 +806,78 @@ function renderSidebar() {
 
 // ========== BOTTOM NAV ==========
 function renderBottomNav() {
-  const active = state.subpages.filter(s => !s.deleted && !s.isNested);
+  const activeSubpages = state.subpages.filter(s => !s.deleted && !s.isNested);
+  
+  const getIcon = (s) => {
+    const key = s.id.split('-')[0];
+    return ICONS[key] || `<span style="font-size:1.1rem">${s.icon}</span>`;
+  };
+
+  // Mapeia os IDs fixados para objetos de navegação, filtrando páginas deletadas
+  const pinnedItems = state.pinnedSubpages
+    .map(id => activeSubpages.find(s => s.id === id))
+    .filter(Boolean)
+    .map(s => ({
+      id: s.id,
+      label: s.name.split(' ')[0],
+      icon: getIcon(s)
+    }));
+
   const navItems = [
     { id:'home', label:'Início', icon:ICONS.home },
-    { id: active[0]?.id, label: active[0]?.name?.split(' ')[0] || 'Beauty', icon:ICONS.beauty },
-    { id: active[1]?.id, label: active[1]?.name?.split(' ')[0] || 'Mind', icon:ICONS.mind },
-    { id: active[2]?.id, label: active[2]?.name?.split(' ')[0] || 'UGC', icon:ICONS.ugc }
+    ...pinnedItems
   ];
-  document.getElementById('bottomNav').innerHTML = DOMPurify.sanitize(navItems.filter(n=>n.id).map(n => {
+
+  let html = navItems.map(n => {
     const isActive = n.id === 'home' ? state.currentView === 'home' : state.currentSubpage === n.id;
     return `<div class="nav-item ${isActive?'active':''}" data-action="navigate" data-args="${n.id==='home'?'home':'subpage'},${n.id}">${n.icon}<span>${DOMPurify.sanitize(n.label)}</span></div>`;
-  }).join(''), DP_CONFIG);
+  }).join('');
+
+  document.getElementById('bottomNav').innerHTML = DOMPurify.sanitize(html, DP_CONFIG);
+}
+
+function openBottomNavEditor() {
+  const activeSubpages = state.subpages.filter(s => !s.deleted && !s.isNested);
+  
+  let html = `
+    <div class="nav-editor-header">
+      <h3>Fixar na Barra Inferior</h3>
+      <p>Escolha até 4 subpáginas para acesso rápido.</p>
+    </div>
+    <div class="nav-editor-list">
+      ${activeSubpages.map(s => {
+        const isPinned = state.pinnedSubpages.includes(s.id);
+        return `
+          <div class="nav-editor-item ${isPinned ? 'pinned' : ''}" data-action="togglePinToBottomNav" data-args="${s.id}">
+            <span class="nei-icon">${s.icon}</span>
+            <span class="nei-name">${DOMPurify.sanitize(s.name)}</span>
+            <span class="nei-status">${isPinned ? 'Fixado' : 'Fixar'}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div class="nav-editor-footer">
+      <button class="small-btn accent" data-action="closeBottomSheet" style="width:100%">Concluído</button>
+    </div>
+  `;
+  openBottomSheet(html);
+}
+
+function togglePinToBottomNav(id) {
+  const idx = state.pinnedSubpages.indexOf(id);
+  if (idx > -1) {
+    state.pinnedSubpages.splice(idx, 1);
+  } else {
+    if (state.pinnedSubpages.length >= 4) {
+      // Poderia mostrar um alerta, mas por enquanto apenas ignora ou substitui
+      // Vamos apenas ignorar para manter a simplicidade ou avisar
+      return; 
+    }
+    state.pinnedSubpages.push(id);
+  }
+  saveState();
+  renderBottomNav();
+  openBottomNavEditor(); // Re-renderiza o editor
 }
 
 
@@ -793,20 +900,36 @@ document.addEventListener('click', e => {
     if(action === 'deleteSubpage') deleteSubpage(args[0]);
     if(action === 'restoreSubpage') restoreSubpage(args[0]);
     if(action === 'permanentDelete') permanentDelete(args[0]);
-    if(action === 'toggleFavorite') toggleFavorite(args[0]);
+     if(action === 'toggleFavorite') toggleFavorite(args[0]);
     if(action === 'toggleEditMode') { window.isEditMode = !window.isEditMode; saveState(); render(); }
+    if(action === 'openBottomNavEditor') openBottomNavEditor();
+    if(action === 'togglePinToBottomNav') togglePinToBottomNav(args[0]);
+    if(action === 'closeBottomSheet') closeBottomSheet();
     if(action === 'moveWidget') {
       const sp = state.subpages.find(s=>s.id===args[0]);
       if(sp) {
-        let idx = parseInt(args[1]);
-        let dir = parseInt(args[2]);
-        let target = idx + dir;
-        if(target >= 0 && target < sp.widgets.length) {
+        const idx = parseInt(args[1]);
+        const dir = parseInt(args[2]);
+        const newIdx = idx + dir;
+        if(newIdx >= 0 && newIdx < sp.widgets.length){
           const temp = sp.widgets[idx];
-          sp.widgets[idx] = sp.widgets[target];
-          sp.widgets[target] = temp;
+          sp.widgets[idx] = sp.widgets[newIdx];
+          sp.widgets[newIdx] = temp;
           saveState(); render();
         }
+      }
+    }
+    if(action === 'scrollToId') {
+      closeSidebar();
+      if(state.currentView !== 'home') {
+        navigate('home');
+        setTimeout(() => {
+          const el = document.getElementById(args[0]);
+          if(el) el.scrollIntoView({behavior:'smooth'});
+        }, 100);
+      } else {
+        const el = document.getElementById(args[0]);
+        if(el) el.scrollIntoView({behavior:'smooth'});
       }
     }
     if(action === 'openWidgetPicker') openWidgetPicker(args[0]);
@@ -823,8 +946,8 @@ document.addEventListener('click', e => {
     if(action === 'renameAccItemFromModal') renameAccItemFromModal();
     if(action === 'selectDate') selectDate(args[0]);
     if(action === 'calNav') calNav(parseInt(args[0]));
-    if(action === 'openSidebar') document.getElementById('sidebar').classList.add('open');
-    if(action === 'closeSidebar') document.getElementById('sidebar').classList.remove('open');
+    if(action === 'openSidebar') openSidebar();
+    if(action === 'closeSidebar') closeSidebar();
     if(action === 'openLightbox') {
       const img = document.getElementById('lightboxImg');
       if(img) {
