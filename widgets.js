@@ -416,17 +416,17 @@ function renderCiclo(w, idx, spId) {
 }
 
 function renderMenuSub(w, idx, spId) {
-  var activeSps = state.subpages.filter(s => !s.deleted && s.id !== spId);
   return '<div class="w-subpages-menu">' +
     (w.data.links || []).map(function(lid, i) {
-      var s = activeSps.find(sub => sub.id === lid);
+      var s = state.subpages.find(sub => sub.id === lid && !sub.deleted);
       if(!s) return '';
       return '<div class="w-spm-item" data-action="navigate" data-args="subpage,' + s.id + '">' +
-        '<div class="w-spm-title"><span style="opacity:0.6">' + s.icon + '</span> ' + DOMPurify.sanitize(s.name) + '</div>' +
+        '<div class="w-spm-title"><span style="opacity:0.6">' + (s.icon || '◇') + '</span> ' + DOMPurify.sanitize(s.name) + '</div>' +
         (window.isEditMode ? '<button class="widget-delete" style="font-size:.6rem" data-action="removeMenuSubLnk" data-args="' + spId + ',' + idx + ',' + i + '">✕</button>' : '') +
       '</div>';
     }).join('') +
-    (window.isEditMode ? '<button class="add-widget-btn" style="margin:5px 0" data-action="promptMenuSubLnk" data-args="' + spId + ',' + idx + '">＋ Adicionar</button>' : '') +
+    '<button class="add-widget-btn" style="margin:10px 0 5px 0" data-action="addSubsubpage" data-args="' + spId + ',' + idx + '">＋ Adicionar Subpágina</button>' +
+    (window.isEditMode ? '<button class="small-btn" style="width:100%;font-size:0.6rem;opacity:0.7;margin-top:4px" data-action="promptMenuSubLnk" data-args="' + spId + ',' + idx + '">Vincular existente</button>' : '') +
   '</div>';
 }
 
@@ -1084,6 +1084,34 @@ var WIDGET_ACTION_HANDLERS = {
     removeMenuSubLnk: function(spId, wIdx, lIdx) {
         var w = getWidgetDataRef(spId, wIdx);
         if(w && w.data.links) { w.data.links.splice(lIdx, 1); saveState(); render(); }
+    },
+    addSubsubpage: function(spId, wIdx) {
+        var w = getWidgetDataRef(spId, wIdx);
+        if(w && typeof musePrompt !== 'undefined') {
+            musePrompt('Nova Subpágina', 'Digite o título da sub-subpágina:').then(function(name) {
+                if(!name || !name.trim()) return;
+                var newId = genId();
+                var parentSp = state.subpages.find(function(s) { return s.id === spId; });
+                state.subpages.push({
+                    id: newId,
+                    name: name.trim(),
+                    icon: '◇',
+                    desc: 'Subpágina de ' + (parentSp ? parentSp.name : 'origem'),
+                    longDesc: 'Esta página foi criada dentro de ' + (parentSp ? parentSp.name : 'outra página') + '.',
+                    gradient: 'custom',
+                    coverImage: '',
+                    widgets: [],
+                    favorite: false,
+                    deleted: false,
+                    isNested: true,
+                    parentId: spId
+                });
+                if(!w.data.links) w.data.links = [];
+                w.data.links.push(newId);
+                saveState();
+                render();
+            });
+        }
     },
     // Tarefas
     addTarefaAdv: function(spId, wIdx) {

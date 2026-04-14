@@ -196,7 +196,7 @@ function render() {
 
 // ========== HOME ==========
 function renderHome(container) {
-  const activeSubpages = state.subpages.filter(s => !s.deleted);
+  const activeSubpages = state.subpages.filter(s => !s.deleted && !s.isNested);
   const today = new Date();
   
   const dateKey = state.selectedDate;
@@ -715,8 +715,8 @@ function closeSidebar() {
 }
 
 function renderSidebar() {
-  const active = state.subpages.filter(s => !s.deleted);
-  const favs = state.subpages.filter(s => s.favorite && !s.deleted);
+  const active = state.subpages.filter(s => !s.deleted && !s.isNested);
+  const favs = state.subpages.filter(s => s.favorite && !s.deleted && !s.isNested);
   const trashed = state.subpages.filter(s => s.deleted);
 
   const html = `
@@ -760,7 +760,7 @@ function renderSidebar() {
 
 // ========== BOTTOM NAV ==========
 function renderBottomNav() {
-  const active = state.subpages.filter(s => !s.deleted);
+  const active = state.subpages.filter(s => !s.deleted && !s.isNested);
   const navItems = [
     { id:'home', label:'Início', icon:ICONS.home },
     { id: active[0]?.id, label: active[0]?.name?.split(' ')[0] || 'Beauty', icon:ICONS.beauty },
