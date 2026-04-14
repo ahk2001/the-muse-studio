@@ -124,6 +124,68 @@
   </div>
 </div>
 
+<!-- TASK DETAIL MODAL -->
+<div class="acc-detail-overlay" id="taskDetailOverlay">
+  <div class="acc-detail-modal">
+    <div class="acc-detail-top">
+      <div class="acc-detail-cat" id="taskDetailStatus">📋 TAREFA</div>
+      <div class="acc-detail-title" id="taskDetailMainTitle">Detalhes da Tarefa</div>
+      <button class="acc-detail-close" data-action="closeTaskDetail"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="acc-detail-body">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom: 20px;">
+        <div id="taskDetailIcon" style="font-size: 1.5rem; cursor: pointer;" data-action="promptTaskIcon">📝</div>
+        <input class="inline-input" id="taskDetailTitle" placeholder="Título da tarefa..." style="font-size: 1.2rem; font-weight: 700;">
+      </div>
+
+      <div class="task-props-grid">
+        <div class="task-prop-item">
+          <label>PRIORIDADE</label>
+          <div class="w-task-badge" id="taskDetailPrio" data-action="cycleTaskPrio">Média</div>
+        </div>
+        <div class="task-prop-item">
+          <label>VENCIMENTO</label>
+          <input type="date" id="taskDetailDate" class="inline-input" style="padding: 4px 8px; font-size: 0.75rem;">
+        </div>
+        <div class="task-prop-item">
+          <label>PROJETO</label>
+          <input id="taskDetailProj" class="inline-input" placeholder="Vincular projeto..." style="padding: 4px 8px; font-size: 0.75rem;">
+        </div>
+        <div class="task-prop-item">
+          <label>LEAD</label>
+          <input id="taskDetailLead" class="inline-input" placeholder="Vincular lead..." style="padding: 4px 8px; font-size: 0.75rem;">
+        </div>
+      </div>
+
+      <div class="acc-detail-label">TAGS</div>
+      <input class="inline-input" id="taskDetailTags" placeholder="Tags separadas por vírgula..." style="margin-bottom: 15px;">
+
+      <div class="acc-detail-label">NOTAS E DESCRIÇÃO</div>
+      <div class="acc-detail-content" id="taskDetailNotes" contenteditable="true" data-placeholder="Adicione notas detalhadas aqui..." style="min-height: 100px; margin-bottom: 15px;"></div>
+
+      <div class="acc-detail-label">
+        <span>ARQUIVOS E MÍDIA</span>
+        <button class="small-btn" data-action="addTaskFile" style="font-size:0.6rem;padding:2px 6px">＋ Adicionar</button>
+      </div>
+      <div id="taskDetailFiles" class="task-files-list"></div>
+
+      <div class="acc-detail-label" style="margin-top: 15px;">COMENTÁRIOS</div>
+      <div id="taskDetailComments" class="task-comments-list"></div>
+      <div class="inline-input-row" style="margin-top: 8px;">
+        <input class="inline-input" id="taskNewComment" placeholder="Escreva um comentário...">
+        <button class="small-btn accent" data-action="btnAddTaskComment">Enviar</button>
+      </div>
+
+      <div class="acc-detail-label" style="margin-top: 25px;">DOCUMENTAÇÃO EXTENSA</div>
+      <div class="acc-detail-content" id="taskDetailDocs" contenteditable="true" data-placeholder="Informações extensas e documentação da tarefa..." style="min-height: 150px;"></div>
+    </div>
+    <div class="acc-detail-footer">
+      <button class="small-btn" data-action="closeTaskDetail">Cancelar</button>
+      <button class="small-btn accent" data-action="saveTaskDetail">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
 <!-- GENERIC MODAL (replaces prompt/confirm) -->
 <div class="muse-modal-overlay" id="museModalOverlay">
   <div class="muse-modal">

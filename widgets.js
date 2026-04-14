@@ -29,9 +29,12 @@ function getCustomDefaultData(type) {
     case 'alerta': return { title: 'IMPORTANTE', text: 'Não esqueça de conferir os prazos!', type: 'warning' };
     case 'ciclo': return { lastDate: new Date().toISOString().split('T')[0], length: 28, flowDuration: 5, symptoms: [] };
     case 'menu-sub': return { links: [] };
-    case 'tarefas-adv': return { tasks: [
-      { id:genId(), title: 'Tarefa Exemplo', status: false, priority: 'Média', date: new Date().toISOString().split('T')[0], tags: ['Geral'], notes: '' }
-    ]};
+    case 'tarefas-adv': return { 
+      activeTab: 'tarefas',
+      tasks: [
+        { id:genId(), title: 'Minha primeira tarefa', status: false, priority: 'Média', date: new Date().toISOString().split('T')[0], tags: ['Geral'], notes: '', icon: '📝', projLink: '', leadLink: '', files: [], comments: [], docs: '' }
+      ]
+    };
     default: return null;
   }
 }
@@ -431,25 +434,85 @@ function renderMenuSub(w, idx, spId) {
 }
 
 function renderTarefasAdv(w, idx, spId) {
+  var activeTab = w.data.activeTab || 'tarefas';
   var tasks = w.data.tasks || [];
-  return '<div class="w-tasks-adv">' +
-    tasks.map(function(t, i) {
-      var badgeClass = t.priority === 'Alta' ? 'prio-high' : '';
-      return '<div class="w-task-adv-item ' + (t.status ? 'done' : '') + '">' +
-        '<div class="w-task-adv-check" data-action="toggleTarefaAdv" data-args="' + spId + ',' + idx + ',' + i + '">' + (t.status ? '✓' : '') + '</div>' +
-        '<div class="w-task-adv-content">' +
-          '<div class="w-task-adv-title" contenteditable="true" data-blur="updateTarefaAdv" data-args="' + spId + ',' + idx + ',' + i + ',title">' + DOMPurify.sanitize(t.title) + '</div>' +
-          '<div class="w-task-adv-meta">' +
-            '<span class="w-task-badge ' + badgeClass + '" data-action="promptTarefaPrio" data-args="' + spId + ',' + idx + ',' + i + '">' + DOMPurify.sanitize(t.priority) + '</span>' +
-            '<span class="w-task-badge" data-action="promptTarefaDate" data-args="' + spId + ',' + idx + ',' + i + '">' + DOMPurify.sanitize(t.date) + '</span>' +
-            '<span class="w-task-badge" data-action="promptTarefaTags" data-args="' + spId + ',' + idx + ',' + i + '">' + (t.tags?t.tags.join(','):'Tag') + '</span>' +
-          '</div>' +
-        '</div>' +
-        '<button class="widget-delete" style="font-size:0.7rem;padding:4px" data-action="removeTarefaAdv" data-args="' + spId + ',' + idx + ',' + i + '">✕</button>' +
-      '</div>';
+  
+  var tabs = [
+    { id: 'tarefas', label: 'Tarefas', icon: '📋' },
+    { id: 'lista', label: 'Lista', icon: '☰' },
+    { id: 'calendario', label: 'Calendário', icon: '📅' }
+  ];
+
+  var tabsHtml = '<div class="w-tasks-adv-tabs">' +
+    tabs.map(function(t) {
+      return '<div class="w-task-tab ' + (activeTab === t.id ? 'active' : '') + '" data-action="setTaskTab" data-args="' + spId + ',' + idx + ',' + t.id + '">' + t.icon + ' ' + t.label + '</div>';
     }).join('') +
-    '<button class="add-widget-btn" style="margin:5px 0" data-action="addTarefaAdv" data-args="' + spId + ',' + idx + '">＋ Nova Tarefa</button>' +
   '</div>';
+
+  var contentHtml = '';
+  if (activeTab === 'tarefas') {
+    contentHtml = '<div style="display:flex;flex-direction:column;gap:10px">' +
+      tasks.map(function(t, i) {
+        var prioClass = t.priority === 'Alta' ? 'prio-high' : (t.priority === 'Média' ? 'prio-med' : 'prio-low');
+        return '<div class="w-task-adv-item ' + (t.status ? 'done' : '') + '" data-action="openTaskDetail" data-args="' + spId + ',' + idx + ',' + i + '">' +
+          '<div class="w-task-adv-check" data-action="toggleTarefaAdv" data-args="' + spId + ',' + idx + ',' + i + '" onclick="event.stopPropagation()">' + (t.status ? '✓' : '') + '</div>' +
+          '<div class="w-task-adv-content">' +
+            '<div class="w-task-adv-title"><span>' + (t.icon || '📝') + '</span> ' + DOMPurify.sanitize(t.title) + '</div>' +
+            '<div class="w-task-adv-meta">' +
+              '<span class="w-task-badge ' + prioClass + '">' + DOMPurify.sanitize(t.priority) + '</span>' +
+              (t.date ? '<span class="w-task-badge">📅 ' + t.date.split('-').reverse().join('/') + '</span>' : '') +
+              (t.tags && t.tags.length > 0 && t.tags[0] !== '' ? t.tags.map(function(tag){ return '<span class="w-task-badge">🏷️ ' + DOMPurify.sanitize(tag) + '</span>' }).join('') : '') +
+            '</div>' +
+          '</div>' +
+          (window.isEditMode ? '<button class="widget-delete" style="font-size:0.7rem;padding:4px" data-action="removeTarefaAdv" data-args="' + spId + ',' + idx + ',' + i + '" onclick="event.stopPropagation()">✕</button>' : '') +
+        '</div>';
+      }).join('') +
+    '</div>';
+  } else if (activeTab === 'lista') {
+    contentHtml = '<div style="display:flex;flex-direction:column;gap:4px">' +
+      tasks.map(function(t, i) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border);font-size:0.8rem;cursor:pointer" data-action="openTaskDetail" data-args="' + spId + ',' + idx + ',' + i + '">' +
+          '<div style="width:16px;height:16px;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.6rem" data-action="toggleTarefaAdv" data-args="' + spId + ',' + idx + ',' + i + '" onclick="event.stopPropagation()">' + (t.status ? '✓' : '') + '</div>' +
+          '<span style="' + (t.status ? 'text-decoration:line-through;opacity:0.5' : '') + '">' + (t.icon || '📝') + ' ' + DOMPurify.sanitize(t.title) + '</span>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  } else if (activeTab === 'calendario') {
+     contentHtml = renderTaskMiniCalendar(w, idx, spId, tasks);
+  }
+
+  return '<div class="w-tasks-adv">' +
+    tabsHtml +
+    contentHtml +
+    '<button class="add-widget-btn" style="margin-top:10px" data-action="addTarefaAdv" data-args="' + spId + ',' + idx + '">＋ Nova Tarefa</button>' +
+  '</div>';
+}
+
+function renderTaskMiniCalendar(w, idx, spId, tasks) {
+  var now = new Date();
+  var month = now.getMonth();
+  var year = now.getFullYear();
+  var firstDay = new Date(year, month, 1).getDay() || 7;
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  var daysHtml = '';
+  var labels = ['S','T','Q','Q','S','S','D'];
+  
+  var labelsHtml = '<div class="w-task-cal-grid">' + labels.map(l => '<div class="w-task-cal-day-label">'+l+'</div>').join('') + '</div>';
+  
+  var gridHtml = '<div class="w-task-cal-grid">';
+  for(var i=1; i<firstDay; i++) gridHtml += '<div></div>';
+  
+  for(var d=1; d<=daysInMonth; d++) {
+    var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    var hasTask = tasks.some(t => t.date === dateStr);
+    var isToday = d === now.getDate();
+    gridHtml += '<div class="w-task-cal-day ' + (hasTask?'has-task':'') + ' ' + (isToday?'today':'') + '" data-action="setTaskTab" data-args="' + spId + ',' + idx + ',tarefas">' + d + '</div>';
+  }
+  gridHtml += '</div>';
+  
+  var monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  return '<div style="text-align:center;margin-bottom:10px;font-size:0.8rem;font-weight:700">' + monthNames[month] + ' ' + year + '</div>' + labelsHtml + gridHtml;
 }
 
 // ========== 2. MECANISMO DE SOBRESCRITA (V2) ==========
@@ -1114,49 +1177,149 @@ var WIDGET_ACTION_HANDLERS = {
         }
     },
     // Tarefas
+    setTaskTab: function(spId, wIdx, tabId) {
+        var w = getWidgetDataRef(spId, wIdx);
+        if(w) { w.data.activeTab = tabId; render(); }
+    },
     addTarefaAdv: function(spId, wIdx) {
         var w = getWidgetDataRef(spId, wIdx);
         if(w) {
             if(!w.data.tasks) w.data.tasks = [];
-            w.data.tasks.push({ id: genId(), title: 'Nova Tarefa', status: false, priority: 'Média', date: new Date().toISOString().split('T')[0], tags: ['Add Tag'], notes: '' });
+            w.data.tasks.push({ 
+                id: genId(), 
+                title: 'Nova Tarefa', 
+                status: false, 
+                priority: 'Média', 
+                date: new Date().toISOString().split('T')[0], 
+                tags: ['Geral'], 
+                notes: '',
+                icon: '📝',
+                projLink: '',
+                leadLink: '',
+                files: [],
+                comments: [],
+                docs: ''
+            });
             saveState(); render();
         }
     },
     removeTarefaAdv: function(spId, wIdx, tIdx) {
         var w = getWidgetDataRef(spId, wIdx);
-        if(w && w.data.tasks) { w.data.tasks.splice(tIdx, 1); saveState(); render(); }
+        if(w && w.data.tasks && typeof museConfirm !== 'undefined') {
+            museConfirm('Excluir Tarefa', 'Deseja remover esta tarefa permanentemente?').then(function(ok) {
+                if(ok) { w.data.tasks.splice(tIdx, 1); saveState(); render(); }
+            });
+        }
     },
     toggleTarefaAdv: function(spId, wIdx, tIdx) {
         var w = getWidgetDataRef(spId, wIdx);
         if(w && w.data.tasks[tIdx]) { w.data.tasks[tIdx].status = !w.data.tasks[tIdx].status; saveState(); render(); }
     },
-    updateTarefaAdv: function(spId, wIdx, tIdx, val) {
+    openTaskDetail: function(spId, wIdx, tIdx) {
         var w = getWidgetDataRef(spId, wIdx);
-        if(w && w.data.tasks[tIdx]) { w.data.tasks[tIdx].title = val; saveState(); }
+        if(!w || !w.data.tasks[tIdx]) return;
+        var t = w.data.tasks[tIdx];
+        window._taskCtx = { spId: spId, wIdx: wIdx, tIdx: tIdx };
+        
+        document.getElementById('taskDetailStatus').textContent = t.status ? '✅ CONCLUÍDA' : '📋 EM ANDAMENTO';
+        document.getElementById('taskDetailMainTitle').textContent = 'Detalhes da Tarefa';
+        document.getElementById('taskDetailIcon').textContent = t.icon || '📝';
+        document.getElementById('taskDetailTitle').value = t.title || '';
+        document.getElementById('taskDetailPrio').textContent = t.priority || 'Média';
+        document.getElementById('taskDetailDate').value = t.date || '';
+        document.getElementById('taskDetailProj').value = t.projLink || '';
+        document.getElementById('taskDetailLead').value = t.leadLink || '';
+        document.getElementById('taskDetailTags').value = (t.tags || []).join(', ');
+        document.getElementById('taskDetailNotes').innerHTML = DOMPurify.sanitize(t.notes || '');
+        document.getElementById('taskDetailDocs').innerHTML = DOMPurify.sanitize(t.docs || '');
+        
+        renderTaskComments(t);
+        renderTaskFiles(t);
+        
+        document.getElementById('taskDetailOverlay').classList.add('open');
     },
-    promptTarefaPrio: function(spId, wIdx, tIdx) {
-        var w = getWidgetDataRef(spId, wIdx);
-        if(w && w.data.tasks[tIdx] && typeof musePrompt !== 'undefined') {
-            musePrompt('Prioridade (Alta/Média/Baixa)', '').then(function(val) {
-                if(val) { w.data.tasks[tIdx].priority = val; saveState(); render(); }
+    closeTaskDetail: function() {
+        document.getElementById('taskDetailOverlay').classList.remove('open');
+    },
+    saveTaskDetail: function() {
+        var ctx = window._taskCtx;
+        if(ctx) {
+            var w = getWidgetDataRef(ctx.spId, ctx.wIdx);
+            if(w && w.data.tasks[ctx.tIdx]) {
+                var t = w.data.tasks[ctx.tIdx];
+                t.icon = document.getElementById('taskDetailIcon').textContent;
+                t.title = document.getElementById('taskDetailTitle').value;
+                t.priority = document.getElementById('taskDetailPrio').textContent;
+                t.date = document.getElementById('taskDetailDate').value;
+                t.projLink = document.getElementById('taskDetailProj').value;
+                t.leadLink = document.getElementById('taskDetailLead').value;
+                t.tags = document.getElementById('taskDetailTags').value.split(',').map(s => s.trim()).filter(s => s !== '');
+                t.notes = document.getElementById('taskDetailNotes').innerHTML;
+                t.docs = document.getElementById('taskDetailDocs').innerHTML;
+                
+                saveState();
+                render();
+            }
+        }
+        document.getElementById('taskDetailOverlay').classList.remove('open');
+    },
+    cycleTaskPrio: function() {
+        var el = document.getElementById('taskDetailPrio');
+        var current = el.textContent;
+        var next = 'Baixa';
+        if(current === 'Baixa') next = 'Média';
+        else if(current === 'Média') next = 'Alta';
+        el.textContent = next;
+    },
+    promptTaskIcon: function() {
+        if(typeof musePrompt !== 'undefined') {
+            musePrompt('Alterar Ícone (Emoji)', 'Digite um emoji:').then(function(val) {
+                if(val) document.getElementById('taskDetailIcon').textContent = val;
             });
         }
     },
-    promptTarefaDate: function(spId, wIdx, tIdx) {
-        var w = getWidgetDataRef(spId, wIdx);
-        if(w && w.data.tasks[tIdx] && typeof musePrompt !== 'undefined') {
-            musePrompt('Data (AAAA-MM-DD)', '').then(function(val) {
-                if(val && val.match(/^\d{4}-\d{2}-\d{2}$/)) { w.data.tasks[tIdx].date = val; saveState(); render(); }
+    addTaskFile: function() {
+        if(typeof musePrompt !== 'undefined') {
+            musePrompt('Adicionar Arquivo (URL)', 'https://').then(function(url) {
+                if(url && url !== 'https://') {
+                    musePrompt('Nome do Arquivo', 'Documento').then(function(name) {
+                        var ctx = window._taskCtx;
+                        var w = getWidgetDataRef(ctx.spId, ctx.wIdx);
+                        var t = w.data.tasks[ctx.tIdx];
+                        if(!t.files) t.files = [];
+                        t.files.push({ name: name || 'Arquivo', url: url });
+                        renderTaskFiles(t);
+                    });
+                }
             });
         }
     },
-    promptTarefaTags: function(spId, wIdx, tIdx) {
-        var w = getWidgetDataRef(spId, wIdx);
-        if(w && w.data.tasks[tIdx] && typeof musePrompt !== 'undefined') {
-            musePrompt('Tags (separadas por vírgula)', '').then(function(val) {
-                if(val) { w.data.tasks[tIdx].tags = val.split(',').map(function(s){return s.trim()}); saveState(); render(); }
-            });
-        }
+    btnAddTaskComment: function() {
+        var input = document.getElementById('taskNewComment');
+        var val = input.value.trim();
+        if(!val) return;
+        
+        var ctx = window._taskCtx;
+        var w = getWidgetDataRef(ctx.spId, ctx.wIdx);
+        var t = w.data.tasks[ctx.tIdx];
+        if(!t.comments) t.comments = [];
+        t.comments.push({ text: val, date: new Date().toISOString() });
+        input.value = '';
+        renderTaskComments(t);
+    },
+    removeTarefaComment: function(spId, wIdx, cIdx) {
+        var ctx = window._taskCtx;
+        var w = getWidgetDataRef(ctx.spId, ctx.wIdx);
+        var t = w.data.tasks[ctx.tIdx];
+        t.comments.splice(cIdx, 1);
+        renderTaskComments(t);
+    },
+    removeTarefaFile: function(spId, wIdx, fIdx) {
+        var ctx = window._taskCtx;
+        var w = getWidgetDataRef(ctx.spId, ctx.wIdx);
+        var t = w.data.tasks[ctx.tIdx];
+        t.files.splice(fIdx, 1);
+        renderTaskFiles(t);
     },
     // Menu Recipe Actions
     closeMenuRecipe: function() {
@@ -1313,5 +1476,41 @@ window.saveMenuRecipe = function() {
     }
     document.getElementById('menuRecipeOverlay').classList.remove('open');
 };
+
+function renderTaskComments(task) {
+    var el = document.getElementById('taskDetailComments');
+    if(!el) return;
+    if(!task.comments || task.comments.length === 0) {
+        el.innerHTML = '<div style="font-size:0.65rem;color:var(--text3);text-align:center;padding:10px">Nenhum comentário ainda.</div>';
+        return;
+    }
+    el.innerHTML = task.comments.map(function(c, i) {
+        return '<div class="task-comment-item">' +
+            '<div>' + DOMPurify.sanitize(c.text) + '</div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center">' +
+                '<span class="task-comment-date">' + new Date(c.date).toLocaleString() + '</span>' +
+                '<button class="widget-delete" style="font-size:0.6rem" data-action="removeTarefaComment" data-args="' + i + '">✕</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function renderTaskFiles(task) {
+    var el = document.getElementById('taskDetailFiles');
+    if(!el) return;
+    if(!task.files || task.files.length === 0) {
+        el.innerHTML = '<div style="font-size:0.65rem;color:var(--text3);text-align:center;padding:10px">Nenhum arquivo anexado.</div>';
+        return;
+    }
+    el.innerHTML = task.files.map(function(f, i) {
+        return '<div class="task-file-item">' +
+            '<div style="display:flex;align-items:center;gap:8px;overflow:hidden">' +
+                '<span>📎</span>' +
+                '<a href="' + f.url + '" target="_blank" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + DOMPurify.sanitize(f.name) + '</a>' +
+            '</div>' +
+            '<button class="widget-delete" style="font-size:0.6rem" data-action="removeTarefaFile" data-args="' + i + '">✕</button>' +
+        '</div>';
+    }).join('');
+}
 
 console.log("[Muse] widgets.js carregado com sucesso.");
