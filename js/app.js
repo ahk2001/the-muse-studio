@@ -55,7 +55,12 @@ document.getElementById('bottomSheetOverlay').addEventListener('click', e => { i
 // ========== SUPABASE & AUTH ==========
 const supabaseUrl = 'https://ebfxschsrkcacnyvhhyi.supabase.co';
 const supabaseKey = 'sb_publishable_ZPdvMhAJ_utWkhJY6CzKog_exQR-9eO';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+let supabase = null;
+try {
+  if (window.supabase && window.supabase.createClient) {
+    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  }
+} catch (e) { console.error("Supabase init error:", e); }
 let currentUser = null;
 
 async function signInWithGoogle() {
@@ -113,26 +118,31 @@ const DEFAULT_STATE = {
 let state;
 async function loadState() {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    currentUser = session?.user || null;
+    if (supabase) {
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUser = session?.user || null;
 
-    let remoteState = null;
-    if (currentUser) {
-      const { data, error } = await supabase.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
-      if (data && data.state_data) remoteState = data.state_data;
+      let remoteState = null;
+      if (currentUser) {
+        const { data, error } = await supabase.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
+        if (data && data.state_data) remoteState = data.state_data;
+      }
+
+      const localRaw = localStorage.getItem('muse_state');
+      let localState = localRaw ? JSON.parse(localRaw) : null;
+      
+      // Migração de dados locais para a nuvem
+      if (currentUser && localState && !remoteState) {
+        remoteState = localState;
+        await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
+      }
+
+      const s = remoteState || localState;
+      state = s ? {...DEFAULT_STATE, ...s} : JSON.parse(JSON.stringify(DEFAULT_STATE));
+    } else {
+      const localRaw = localStorage.getItem('muse_state');
+      state = localRaw ? {...DEFAULT_STATE, ...JSON.parse(localRaw)} : JSON.parse(JSON.stringify(DEFAULT_STATE));
     }
-
-    const localRaw = localStorage.getItem('muse_state');
-    let localState = localRaw ? JSON.parse(localRaw) : null;
-    
-    // Migração de dados locais para a nuvem
-    if (currentUser && localState && !remoteState) {
-      remoteState = localState;
-      await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
-    }
-
-    const s = remoteState || localState;
-    state = s ? {...DEFAULT_STATE, ...s} : JSON.parse(JSON.stringify(DEFAULT_STATE));
     
     // Migração: se pinnedSubpages estiver vazio
     if (!state.pinnedSubpages || state.pinnedSubpages.length === 0) {
@@ -157,7 +167,7 @@ async function loadState() {
 
 async function saveState() { 
   localStorage.setItem('muse_state', JSON.stringify(state)); 
-  if (currentUser) {
+  if (supabase && currentUser) {
     await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: state, updated_at: new Date().toISOString() });
   }
 }
