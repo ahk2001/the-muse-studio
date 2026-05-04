@@ -1078,7 +1078,21 @@ document.addEventListener('keydown', e => {
 
 // ========== INIT ==========
 async function initApp() {
-  await loadState();
+  try {
+    await Promise.race([
+      loadState(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
+  } catch(e) {
+    console.warn("loadState timeout or error, falling back to localStorage:", e);
+    try {
+      const localRaw = localStorage.getItem('muse_state');
+      state = localRaw ? {...DEFAULT_STATE, ...JSON.parse(localRaw)} : JSON.parse(JSON.stringify(DEFAULT_STATE));
+    } catch(e2) {
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    }
+    document.documentElement.setAttribute('data-theme', state.theme);
+  }
   initSplash();
   setTimeout(() => render(), 100);
 }
