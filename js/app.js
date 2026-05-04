@@ -52,6 +52,45 @@ function closeBottomSheet() {
 }
 document.getElementById('bottomSheetOverlay').addEventListener('click', e => { if(e.target.id === 'bottomSheetOverlay') closeBottomSheet(); });
 
+// ========== SUPABASE & AUTH ==========
+const supabaseUrl = 'https://ebfxschsrkcacnyvhhyi.supabase.co';
+const supabaseKey = 'sb_publishable_ZPdvMhAJ_utWkhJY6CzKog_exQR-9eO';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+let currentUser = null;
+
+async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  });
+  if (error) alert("Erro ao fazer login: " + error.message);
+}
+
+async function signOut() {
+  await supabase.auth.signOut();
+  currentUser = null;
+  window.location.reload();
+}
+
+function renderAuthUI() {
+  const authDiv = document.getElementById('sidebarAuth');
+  if (!authDiv) return;
+  if (currentUser) {
+    authDiv.innerHTML = `
+      <div style="font-size: 0.8rem; color: var(--text2); word-break: break-all;">Logado como:<br><b>${DOMPurify.sanitize(currentUser.email)}</b></div>
+      <button class="small-btn" data-action="signOut" style="width: 100%;">Sair</button>
+    `;
+  } else {
+    authDiv.innerHTML = `
+      <div style="font-size: 0.8rem; color: var(--text2); margin-bottom: 4px;">Salve seus dados na nuvem:</div>
+      <button class="small-btn accent" data-action="signInWithGoogle" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Entrar com Google
+      </button>
+    `;
+  }
+}
+
 // ========== STATE ==========
 const DEFAULT_STATE = {
   theme: 'dark',
@@ -72,12 +111,30 @@ const DEFAULT_STATE = {
 };
 
 let state;
-function loadState() {
+async function loadState() {
   try {
-    const s = localStorage.getItem('muse_state');
-    state = s ? {...DEFAULT_STATE, ...JSON.parse(s)} : JSON.parse(JSON.stringify(DEFAULT_STATE));
+    const { data: { session } } = await supabase.auth.getSession();
+    currentUser = session?.user || null;
+
+    let remoteState = null;
+    if (currentUser) {
+      const { data, error } = await supabase.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
+      if (data && data.state_data) remoteState = data.state_data;
+    }
+
+    const localRaw = localStorage.getItem('muse_state');
+    let localState = localRaw ? JSON.parse(localRaw) : null;
     
-    // Migração: se pinnedSubpages estiver vazio, pega as 3 primeiras subpáginas ativas
+    // Migração de dados locais para a nuvem
+    if (currentUser && localState && !remoteState) {
+      remoteState = localState;
+      await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
+    }
+
+    const s = remoteState || localState;
+    state = s ? {...DEFAULT_STATE, ...s} : JSON.parse(JSON.stringify(DEFAULT_STATE));
+    
+    // Migração: se pinnedSubpages estiver vazio
     if (!state.pinnedSubpages || state.pinnedSubpages.length === 0) {
       state.pinnedSubpages = state.subpages
         .filter(sp => !sp.deleted && !sp.isNested)
@@ -90,10 +147,20 @@ function loadState() {
         sp.widgets.forEach(w => { if(w.type === 'pomodoro') w.data.isRunning = false; });
       }
     });
-  } catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
+  } catch(e) {
+    console.error("Error loading state", e);
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE)); 
+  }
   document.documentElement.setAttribute('data-theme', state.theme);
+  renderAuthUI();
 }
-function saveState() { localStorage.setItem('muse_state', JSON.stringify(state)); }
+
+async function saveState() { 
+  localStorage.setItem('muse_state', JSON.stringify(state)); 
+  if (currentUser) {
+    await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: state, updated_at: new Date().toISOString() });
+  }
+}
 function genId() { return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5); }
 
 // ========== GLOBAIS ==========
@@ -966,6 +1033,8 @@ document.addEventListener('click', e => {
       museModalResolve(val);
     }
     if(action === 'museModalCancel') museModalResolve(null);
+    if(action === 'signInWithGoogle') signInWithGoogle();
+    if(action === 'signOut') signOut();
   } else {
      // Modals and overlays
      if(e.target.id === 'museModalOverlay') museModalResolve(null);
@@ -998,7 +1067,9 @@ document.addEventListener('keydown', e => {
 });
 
 // ========== INIT ==========
-loadState();
-
-initSplash();
-setTimeout(() => render(), 100);
+async function initApp() {
+  await loadState();
+  initSplash();
+  setTimeout(() => render(), 100);
+}
+initApp();
