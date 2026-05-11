@@ -119,13 +119,25 @@ let state;
 async function loadState() {
   try {
     if (supabase) {
-      const { data: { session } } = await supabase.auth.getSession();
+      // getSession pode falhar se Supabase estiver offline
+      let session = null;
+      try {
+        const result = await supabase.auth.getSession();
+        session = result?.data?.session || null;
+      } catch(authErr) {
+        console.warn("getSession failed:", authErr);
+      }
       currentUser = session?.user || null;
 
       let remoteState = null;
       if (currentUser) {
-        const { data, error } = await supabase.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
-        if (data && data.state_data) remoteState = data.state_data;
+        try {
+          const { data, error } = await supabase.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
+          if (data && data.state_data) remoteState = data.state_data;
+          if (error) console.warn("muse_state query error:", error.message);
+        } catch(dbErr) {
+          console.warn("muse_state query failed:", dbErr);
+        }
       }
 
       const localRaw = localStorage.getItem('muse_state');
@@ -134,7 +146,11 @@ async function loadState() {
       // Migração de dados locais para a nuvem
       if (currentUser && localState && !remoteState) {
         remoteState = localState;
-        await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
+        try {
+          await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
+        } catch(migErr) {
+          console.warn("Migration upsert failed:", migErr);
+        }
       }
 
       const s = remoteState || localState;
@@ -1078,10 +1094,13 @@ document.addEventListener('keydown', e => {
 
 // ========== INIT ==========
 async function initApp() {
+  // Inicia o splash IMEDIATAMENTE — nunca deve depender do Supabase
+  initSplash();
+
   try {
     await Promise.race([
       loadState(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
     ]);
   } catch(e) {
     console.warn("loadState timeout or error, falling back to localStorage:", e);
@@ -1092,8 +1111,10 @@ async function initApp() {
       state = JSON.parse(JSON.stringify(DEFAULT_STATE));
     }
     document.documentElement.setAttribute('data-theme', state.theme);
+    renderAuthUI();
   }
-  initSplash();
-  setTimeout(() => render(), 100);
+
+  // Renderiza o app assim que o state estiver pronto
+  render();
 }
 initApp();
