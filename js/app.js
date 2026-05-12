@@ -55,16 +55,16 @@ document.getElementById('bottomSheetOverlay').addEventListener('click', e => { i
 // ========== SUPABASE & AUTH ==========
 const supabaseUrl = 'https://ebfxschsrkcacnyvhhyi.supabase.co';
 const supabaseKey = 'sb_publishable_ZPdvMhAJ_utWkhJY6CzKog_exQR-9eO';
-let supabase = null;
+let supabaseClient = null;
 try {
   if (window.supabase && window.supabase.createClient) {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
   }
 } catch (e) { console.error("Supabase init error:", e); }
 let currentUser = null;
 
 async function signInWithGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin }
   });
@@ -72,7 +72,7 @@ async function signInWithGoogle() {
 }
 
 async function signOut() {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   currentUser = null;
   window.location.reload();
 }
@@ -118,11 +118,11 @@ const DEFAULT_STATE = {
 let state;
 async function loadState() {
   try {
-    if (supabase) {
+    if (supabaseClient) {
       // getSession pode falhar se Supabase estiver offline
       let session = null;
       try {
-        const result = await supabase.auth.getSession();
+        const result = await supabaseClient.auth.getSession();
         session = result?.data?.session || null;
       } catch(authErr) {
         console.warn("getSession failed:", authErr);
@@ -132,7 +132,7 @@ async function loadState() {
       let remoteState = null;
       if (currentUser) {
         try {
-          const { data, error } = await supabase.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
+          const { data, error } = await supabaseClient.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
           if (data && data.state_data) remoteState = data.state_data;
           if (error) console.warn("muse_state query error:", error.message);
         } catch(dbErr) {
@@ -147,7 +147,7 @@ async function loadState() {
       if (currentUser && localState && !remoteState) {
         remoteState = localState;
         try {
-          await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
+          await supabaseClient.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
         } catch(migErr) {
           console.warn("Migration upsert failed:", migErr);
         }
@@ -183,8 +183,8 @@ async function loadState() {
 
 async function saveState() { 
   localStorage.setItem('muse_state', JSON.stringify(state)); 
-  if (supabase && currentUser) {
-    await supabase.from('muse_state').upsert({ user_id: currentUser.id, state_data: state, updated_at: new Date().toISOString() });
+  if (supabaseClient && currentUser) {
+    await supabaseClient.from('muse_state').upsert({ user_id: currentUser.id, state_data: state, updated_at: new Date().toISOString() });
   }
 }
 function genId() { return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5); }
