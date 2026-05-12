@@ -63,37 +63,77 @@ try {
 } catch (e) { console.error("Supabase init error:", e); }
 let currentUser = null;
 
+// --- AUTH SCREEN HELPERS ---
+function showAuthScreen() {
+  const authScreen = document.getElementById('authScreen');
+  const app = document.getElementById('app');
+  const bottomNav = document.getElementById('bottomNav');
+  authScreen.classList.remove('hide');
+  authScreen.classList.add('show');
+  app.classList.remove('show');
+  bottomNav.style.display = 'none';
+}
+
+function hideAuthScreen() {
+  const authScreen = document.getElementById('authScreen');
+  const app = document.getElementById('app');
+  const bottomNav = document.getElementById('bottomNav');
+  authScreen.classList.remove('show');
+  authScreen.classList.add('hide');
+  app.classList.add('show');
+  bottomNav.style.display = '';
+}
+
+function setAuthLoading(loading) {
+  const btn = document.getElementById('authGoogleBtn');
+  const loader = document.getElementById('authLoading');
+  if (loading) {
+    btn.style.display = 'none';
+    loader.classList.add('show');
+  } else {
+    btn.style.display = '';
+    loader.classList.remove('show');
+  }
+}
+
 async function signInWithGoogle() {
+  setAuthLoading(true);
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin }
   });
-  if (error) alert("Erro ao fazer login: " + error.message);
+  if (error) {
+    alert("Erro ao fazer login: " + error.message);
+    setAuthLoading(false);
+  }
 }
 
 async function signOut() {
-  await supabaseClient.auth.signOut();
+  const ok = await museConfirm('Sair da conta', 'Deseja realmente sair? Seus dados estão salvos na nuvem.');
+  if (!ok) return;
+  // Limpa dados locais para segurança
+  localStorage.removeItem('muse_state');
+  localStorage.removeItem('muse_cached_user');
   currentUser = null;
-  window.location.reload();
+  state = null;
+  await supabaseClient.auth.signOut();
+  showAuthScreen();
 }
 
-function renderAuthUI() {
-  const authDiv = document.getElementById('sidebarAuth');
-  if (!authDiv) return;
-  if (currentUser) {
-    authDiv.innerHTML = `
-      <div style="font-size: 0.8rem; color: var(--text2); word-break: break-all;">Logado como:<br><b>${DOMPurify.sanitize(currentUser.email)}</b></div>
-      <button class="small-btn" data-action="signOut" style="width: 100%;">Sair</button>
-    `;
+function renderHeaderUser() {
+  const avatar = document.getElementById('headerAvatar');
+  if (!avatar || !currentUser) return;
+  const meta = currentUser.user_metadata || {};
+  const photoUrl = meta.avatar_url || meta.picture;
+  const name = meta.full_name || meta.name || currentUser.email || '';
+  const initial = name.charAt(0).toUpperCase();
+
+  if (photoUrl) {
+    avatar.innerHTML = `<img src="${DOMPurify.sanitize(photoUrl)}" alt="Avatar" referrerpolicy="no-referrer">`;
   } else {
-    authDiv.innerHTML = `
-      <div style="font-size: 0.8rem; color: var(--text2); margin-bottom: 4px;">Salve seus dados na nuvem:</div>
-      <button class="small-btn accent" data-action="signInWithGoogle" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-        Entrar com Google
-      </button>
-    `;
+    avatar.innerHTML = `<span class="header-avatar-fallback">${initial}</span>`;
   }
+  avatar.title = currentUser.email || 'Sua conta';
 }
 
 // ========== STATE ==========
@@ -117,68 +157,71 @@ const DEFAULT_STATE = {
 
 let state;
 async function loadState() {
+  if (!currentUser) {
+    // Sem usuário logado, não carregar dados
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    return;
+  }
+
   try {
-    if (supabaseClient) {
-      // getSession pode falhar se Supabase estiver offline
-      let session = null;
-      try {
-        const result = await supabaseClient.auth.getSession();
-        session = result?.data?.session || null;
-      } catch(authErr) {
-        console.warn("getSession failed:", authErr);
-      }
-      currentUser = session?.user || null;
+    let remoteState = null;
+    try {
+      const { data, error } = await supabaseClient.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
+      if (data && data.state_data) remoteState = data.state_data;
+      if (error && error.code !== 'PGRST116') console.warn("muse_state query error:", error.message);
+    } catch(dbErr) {
+      console.warn("muse_state query failed:", dbErr);
+    }
 
-      let remoteState = null;
-      if (currentUser) {
-        try {
-          const { data, error } = await supabaseClient.from('muse_state').select('state_data').eq('user_id', currentUser.id).single();
-          if (data && data.state_data) remoteState = data.state_data;
-          if (error) console.warn("muse_state query error:", error.message);
-        } catch(dbErr) {
-          console.warn("muse_state query failed:", dbErr);
-        }
-      }
-
-      const localRaw = localStorage.getItem('muse_state');
-      let localState = localRaw ? JSON.parse(localRaw) : null;
-      
-      // Migração de dados locais para a nuvem
-      if (currentUser && localState && !remoteState) {
-        remoteState = localState;
-        try {
-          await supabaseClient.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
-        } catch(migErr) {
-          console.warn("Migration upsert failed:", migErr);
-        }
-      }
-
-      const s = remoteState || localState;
-      state = s ? {...DEFAULT_STATE, ...s} : JSON.parse(JSON.stringify(DEFAULT_STATE));
+    // Verificar cache local pertence ao usuário logado
+    const cachedUserId = localStorage.getItem('muse_cached_user');
+    const localRaw = localStorage.getItem('muse_state');
+    let localState = null;
+    if (cachedUserId === currentUser.id && localRaw) {
+      try { localState = JSON.parse(localRaw); } catch(e) { /* ignorar */ }
     } else {
-      const localRaw = localStorage.getItem('muse_state');
-      state = localRaw ? {...DEFAULT_STATE, ...JSON.parse(localRaw)} : JSON.parse(JSON.stringify(DEFAULT_STATE));
-    }
-    
-    // Migração: se pinnedSubpages estiver vazio
-    if (!state.pinnedSubpages || state.pinnedSubpages.length === 0) {
-      state.pinnedSubpages = state.subpages
-        .filter(sp => !sp.deleted && !sp.isNested)
-        .slice(0, 3)
-        .map(sp => sp.id);
+      // Cache de outro usuário — limpar
+      localStorage.removeItem('muse_state');
     }
 
-    state.subpages.forEach(sp => {
-      if (sp.widgets) {
-        sp.widgets.forEach(w => { if(w.type === 'pomodoro') w.data.isRunning = false; });
+    // Migração de dados locais antigos (sem user associado) para a nuvem
+    if (!cachedUserId && localRaw && !remoteState) {
+      try {
+        localState = JSON.parse(localRaw);
+        remoteState = localState;
+        await supabaseClient.from('muse_state').upsert({ user_id: currentUser.id, state_data: remoteState });
+      } catch(migErr) {
+        console.warn("Migration upsert failed:", migErr);
       }
-    });
+    }
+
+    const s = remoteState || localState;
+    state = s ? {...DEFAULT_STATE, ...s} : JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+    // Salvar cache local com identificação do usuário
+    localStorage.setItem('muse_cached_user', currentUser.id);
+    localStorage.setItem('muse_state', JSON.stringify(state));
+
   } catch(e) {
     console.error("Error loading state", e);
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE)); 
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
   }
+
+  // Migração: se pinnedSubpages estiver vazio
+  if (!state.pinnedSubpages || state.pinnedSubpages.length === 0) {
+    state.pinnedSubpages = state.subpages
+      .filter(sp => !sp.deleted && !sp.isNested)
+      .slice(0, 3)
+      .map(sp => sp.id);
+  }
+
+  state.subpages.forEach(sp => {
+    if (sp.widgets) {
+      sp.widgets.forEach(w => { if(w.type === 'pomodoro') w.data.isRunning = false; });
+    }
+  });
+
   document.documentElement.setAttribute('data-theme', state.theme);
-  renderAuthUI();
 }
 
 async function saveState() { 
@@ -1061,6 +1104,7 @@ document.addEventListener('click', e => {
     if(action === 'museModalCancel') museModalResolve(null);
     if(action === 'signInWithGoogle') signInWithGoogle();
     if(action === 'signOut') signOut();
+    if(action === 'goToLogin') showAuthScreen();
   } else {
      // Modals and overlays
      if(e.target.id === 'museModalOverlay') museModalResolve(null);
@@ -1094,27 +1138,59 @@ document.addEventListener('keydown', e => {
 
 // ========== INIT ==========
 async function initApp() {
-  // Inicia o splash IMEDIATAMENTE — nunca deve depender do Supabase
+  // 1. Splash animado por 2.2s
   initSplash();
 
-  try {
-    await Promise.race([
-      loadState(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-    ]);
-  } catch(e) {
-    console.warn("loadState timeout or error, falling back to localStorage:", e);
-    try {
-      const localRaw = localStorage.getItem('muse_state');
-      state = localRaw ? {...DEFAULT_STATE, ...JSON.parse(localRaw)} : JSON.parse(JSON.stringify(DEFAULT_STATE));
-    } catch(e2) {
-      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-    }
-    document.documentElement.setAttribute('data-theme', state.theme);
-    renderAuthUI();
+  if (!supabaseClient) {
+    console.error("Supabase não inicializado");
+    setTimeout(() => showAuthScreen(), 2400);
+    return;
   }
 
-  // Renderiza o app assim que o state estiver pronto
-  render();
+  // 2. Checar se já existe sessão ativa
+  let session = null;
+  try {
+    const result = await Promise.race([
+      supabaseClient.auth.getSession(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+    session = result?.data?.session || null;
+  } catch(e) {
+    console.warn("getSession timeout or error:", e);
+  }
+
+  if (session?.user) {
+    // Usuário logado — carregar dados e mostrar app
+    currentUser = session.user;
+    await loadState();
+    renderHeaderUser();
+    render();
+    // Esperar splash terminar antes de mostrar
+    setTimeout(() => hideAuthScreen(), 2400);
+  } else {
+    // Sem sessão — mostrar tela de login após splash
+    setTimeout(() => {
+      document.getElementById('splash').classList.add('hide');
+      showAuthScreen();
+    }, 2400);
+  }
+
+  // 3. Listener para mudanças de autenticação em tempo real
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      currentUser = session.user;
+      await loadState();
+      renderHeaderUser();
+      render();
+      hideAuthScreen();
+      document.getElementById('splash').classList.add('hide');
+    } else if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      state = null;
+      localStorage.removeItem('muse_state');
+      localStorage.removeItem('muse_cached_user');
+      showAuthScreen();
+    }
+  });
 }
 initApp();
